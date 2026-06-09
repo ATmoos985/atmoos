@@ -1,0 +1,142 @@
+---
+import { type CollectionEntry } from 'astro:content'
+
+import { getBlogCollection } from 'astro-pure/server'
+import { cn } from 'astro-pure/utils'
+
+export const prerender = true
+export const partial = true
+
+const docsCollection = (await getBlogCollection('docs')) as CollectionEntry<'docs'>[]
+
+const categoryMeta: Record<string, { title: string; summary: string; order: number }> = {
+  setup: {
+    title: '建站与配置',
+    summary: '站点搭建、内容写作和发布流程。',
+    order: 1
+  },
+  integrations: {
+    title: '功能组件',
+    summary: '评论、搜索、展示组件和交互增强。',
+    order: 2
+  },
+  advanced: {
+    title: '维护优化',
+    summary: '性能、主题、升级和长期维护。',
+    order: 3
+  }
+}
+
+const docsByCategory = docsCollection.reduce<Record<string, CollectionEntry<'docs'>[]>>(
+  (acc, doc) => {
+    const category = doc.id.split('/')[0] ?? 'misc'
+    acc[category] ??= []
+    acc[category].push(doc)
+    return acc
+  },
+  {}
+)
+
+const docsTree = Object.entries(docsByCategory)
+  .map(([id, docs]) => ({
+    id,
+    docs: docs.sort((a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title)),
+    meta: categoryMeta[id] ?? {
+      title: id,
+      summary: '持续整理中的笔记分组。',
+      order: 999
+    }
+  }))
+  .sort((a, b) => a.meta.order - b.meta.order || a.meta.title.localeCompare(b.meta.title))
+
+type Props = {
+  title?: boolean
+  class?: string
+}
+
+const { title = true, class: className, ...props } = Astro.props
+---
+
+<docs-toc class={cn('not-prose', className)} {...props}>
+  {
+    title && (
+      <div>
+        <h2 class='text-foreground font-medium'>笔记库</h2>
+        <p class='mt-1 text-sm leading-6 text-muted-foreground'>按主题维护的长期记录。</p>
+      </div>
+    )
+  }
+  <ul class='mt-4 flex flex-col gap-y-5'>
+    {
+      docsTree.map(({ docs, meta }) => (
+        <li>
+          <div class='flex items-baseline justify-between gap-3'>
+            <h3 class='text-xs font-medium uppercase tracking-widest text-muted-foreground'>
+              {meta.title}
+            </h3>
+            <span class='text-xs text-muted-foreground'>{docs.length}</span>
+          </div>
+          <p class='mt-1 text-xs leading-5 text-muted-foreground'>{meta.summary}</p>
+          <ul class='mt-2 flex flex-col'>
+            {docs.map((doc) => (
+              <li class='docs-item relative ms-2 flex rounded-lg px-3 py-1.5 text-foreground/75 transition-all'>
+                <a class='min-w-0 flex-1 hover:text-foreground' href={`/docs/${doc.id}`}>
+                  <span class='block truncate'>{doc.data.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))
+    }
+  </ul>
+</docs-toc>
+
+<style>
+  docs-toc .docs-item::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 12%;
+    bottom: 12%;
+    left: -0.5rem;
+    width: 2px;
+    background-color: hsl(var(--input) / var(--un-bg-opacity));
+  }
+
+  docs-toc :global(.docs-item.docs-hl) {
+    background-color: hsl(var(--muted) / var(--un-bg-opacity));
+    font-weight: 500;
+    & a {
+      color: hsl(var(--primary) / var(--un-text-opacity));
+    }
+
+    &::before {
+      background-color: hsl(var(--primary) / var(--un-bg-opacity));
+    }
+  }
+</style>
+
+<script>
+  class DocsTOC extends HTMLElement {
+    link: string = ''
+
+    constructor() {
+      super()
+      this.link = window.location.pathname
+    }
+
+    connectedCallback() {
+      const links = this.querySelectorAll('a')
+      links.forEach((link) => {
+        if (link.getAttribute('href') === this.link) {
+          link.parentElement?.classList.add('docs-hl')
+        }
+      })
+    }
+  }
+
+  if (!customElements.get('docs-toc')) {
+    customElements.define('docs-toc', DocsTOC)
+  }
+</script>

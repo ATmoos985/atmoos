@@ -1,23 +1,67 @@
 ---
+import type { CollectionEntry } from 'astro:content'
 import { Image } from 'astro:assets'
 
-import { Quote } from 'astro-pure/advanced'
 import { PostPreview } from 'astro-pure/components/pages'
 import { getBlogCollection, sortMDByDate } from 'astro-pure/server'
-import { Button, Card, Icon, Label } from 'astro-pure/user'
+import { Button, Icon, Label } from 'astro-pure/user'
 import PageLayout from '@/layouts/BaseLayout.astro'
-import ProjectCard from '@/components/home/ProjectCard.astro'
-import Section from '@/components/home/Section.astro'
-import SkillLayout from '@/components/home/SkillLayout.astro'
 import config from '@/site-config'
 
-const languages = ['Html', 'JavaScript', 'CSS', 'Shell']
-const frontend = ['TypeScript', 'Vite', 'Webpack', 'Astro']
-const backend = ['Vercel', 'Waline']
+const MAX_THOUGHTS = 5
+const MAX_NOTES = 6
 
-const MAX_POSTS = 10
-const allPosts = await getBlogCollection()
-const allPostsByDate = sortMDByDate(allPosts).slice(0, MAX_POSTS)
+const thoughts = sortMDByDate(await getBlogCollection()).slice(0, MAX_THOUGHTS)
+const notes = (await getBlogCollection('docs')) as CollectionEntry<'docs'>[]
+
+const noteMeta: Record<string, { title: string; summary: string; accent: string }> = {
+  setup: {
+    title: '建站与配置',
+    summary: '站点搭建、内容写作和发布流程。',
+    accent: 'border-sky-400'
+  },
+  integrations: {
+    title: '功能组件',
+    summary: '评论、搜索、展示组件和交互增强。',
+    accent: 'border-emerald-400'
+  },
+  advanced: {
+    title: '维护优化',
+    summary: '性能、主题、升级和长期维护。',
+    accent: 'border-rose-400'
+  }
+}
+const noteOrder = Object.keys(noteMeta)
+
+const getNoteTime = (note: CollectionEntry<'docs'>) =>
+  new Date(note.data.updatedDate ?? note.data.publishDate ?? 0).valueOf()
+
+const recentNotes = [...notes]
+  .sort((a, b) => getNoteTime(b) - getNoteTime(a) || a.data.order - b.data.order)
+  .slice(0, MAX_NOTES)
+
+const noteGroups = notes.reduce<Record<string, CollectionEntry<'docs'>[]>>((acc, note) => {
+  const group = note.id.split('/')[0] ?? 'misc'
+  acc[group] ??= []
+  acc[group].push(note)
+  return acc
+}, {})
+
+const noteCategories = Object.entries(noteGroups)
+  .map(([id, items]) => ({
+    id,
+    items: items.sort((a, b) => a.data.order - b.data.order),
+    ...(noteMeta[id] ?? {
+      title: id,
+      summary: '持续整理中的笔记分组。',
+      accent: 'border-muted-foreground'
+    })
+  }))
+  .sort((a, b) => {
+    const aOrder = noteOrder.includes(a.id) ? noteOrder.indexOf(a.id) : 999
+    const bOrder = noteOrder.includes(b.id) ? noteOrder.indexOf(b.id) : 999
+    return aOrder - bOrder || a.title.localeCompare(b.title)
+  })
 
 const imagePath = config.logo.src
 const images = import.meta.glob<{ default: ImageMetadata }>(
@@ -29,169 +73,123 @@ if (!images[imagePath])
   )
 ---
 
-<PageLayout meta={{ title: 'Home' }} highlightColor='#659EB9'>
+<PageLayout meta={{ title: '首页' }} highlightColor='#4F8F8A'>
   <main class='flex w-full flex-col items-center'>
-    <section class='animate mb-10 flex flex-col items-center gap-y-7' id='content-header'>
-      <Image
-        src={images[imagePath]()}
-        alt={config.logo.alt || 'Profile'}
-        class='h-28 w-auto rounded-full border p-1'
-        loading='eager'
-        fetchpriority='high'
-      />
-
-      <div class='flex flex-col items-center gap-y-4'>
-        <h1 class='text-3xl font-medium'>{config.author}</h1>
-        <div class='flex flex-wrap justify-center gap-x-7 gap-y-3'>
-          <Label title='Somewhere'>
-            <Icon name='location' class='size-5' slot='icon' />
-          </Label>
-          <Label
-            title='Source code'
-            as='a'
-            href='https://github.com/cworld1/astro-theme-pure'
-            target='_blank'
-          >
-            <Icon name='github' class='size-5' slot='icon' />
-          </Label>
+    <section
+      class='animate grid w-full items-center gap-8 py-10 md:grid-cols-[0.95fr_1.05fr] md:py-14'
+      id='content-header'
+    >
+      <div class='flex flex-col gap-y-6'>
+        <div class='flex flex-wrap gap-2'>
+          <Label title='杂想' />
+          <Label title='知识库' />
+          <Label title='长期记录' />
+        </div>
+        <div class='max-w-2xl'>
+          <p class='mb-3 text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground'>
+            Atmoos Notebook
+          </p>
+          <h1 class='text-4xl font-medium leading-tight sm:text-5xl'>
+            把零散想法留下来，把有用知识整理成树。
+          </h1>
+          <p class='mt-5 max-w-xl text-base leading-8 text-muted-foreground'>
+            这里会同时保留两种记录：杂想是按时间流动的片段，笔记库是按主题沉淀的结构。
+          </p>
+        </div>
+        <div class='flex flex-wrap gap-3'>
+          <Button title='进入笔记库' href='/docs' variant='ahead' />
+          <Button title='查看杂想' href='/blog' />
         </div>
       </div>
 
-      {/* Get template */}
-      <a
-        href='https://github.com/cworld1/astro-theme-pure'
-        target='_blank'
-        class='flex flex-row items-center gap-x-3 rounded-full border bg-background px-4 py-2 text-sm shadow-sm transition-shadow hover:shadow-md'
-      >
-        <span class='relative flex items-center justify-center'>
-          <span
-            class='absolute size-2 animate-ping rounded-full border border-green-400 bg-green-400 opacity-75'
-          ></span>
-          <span class='size-2 rounded-full bg-green-400'></span>
-        </span>
-        <p class='font-medium text-muted-foreground'>Get Template</p>
-      </a>
-    </section>
-
-    <div id='content' class='animate flex flex-col gap-y-10 md:w-4/5 lg:w-5/6'>
-      <Section title='About'>
-        <p class='text-muted-foreground'>Developer / Designer</p>
-        <p class='text-muted-foreground'>
-          Lorem ipsum dolor sit amet, vidit suscipit at mei. Quem denique mea id. Usu ei regione
-          indoctum dissentiunt, cu meliore fuisset mei, vel quod voluptua ne. Ex dicat impedit mel,
-          at eum oratio possit voluptatum.
-        </p>
-        <Button title='More about me' class='w-fit self-end' href='/about' variant='ahead' />
-      </Section>
-      {
-        allPostsByDate.length > 0 && (
-          <Section title='Posts'>
-            <ul class='flex flex-col gap-y-1.5 sm:gap-y-2'>
-              {allPostsByDate.map((p) => (
-                <li class='flex flex-col gap-x-2 sm:flex-row'>
-                  <PostPreview post={p} />
-                </li>
-              ))}
-            </ul>
-            <Button title='More posts' class='w-fit self-end' href='/blog' variant='ahead' />
-          </Section>
-        )
-      }
-
-      {
-        /* <Section title='Experience'>
-      <Card
-        heading='Lorem Ipsum'
-        subheading='Sit amet consectetur'
-        date='Dec 2022 - Nov 2023'
-        imagePath='/src/assets/about-astro.png'
-        altText='Lorem, ipsum dolor sit'
-        imageClass='h-12 w-auto md:-start-16'
-      >
-        <ul class='ms-4 list-disc text-muted-foreground'>
-          <li>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Dolore debitis recusandae, ut
-            molestiae laboriosam pariatur!
-
-            <li>Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, pariatur!</li>
-          </li>
-        </ul>
-      </Card>
-      <Card
-        heading='Lorem Ipsum'
-        subheading='Sit amet consectetur'
-        date='Dec 2022 - Nov 2023'
-        imagePath='/src/assets/about-astro.png'
-        altText='Lorem, ipsum dolor sit'
-        imageClass='h-12 w-auto md:-start-16'
-      />
-    </Section> */
-      }
-      <Section title='Education'>
-        <Card
-          as='a'
-          heading='Lorem ipsum'
-          subheading='Lorem ipsum dolor sit amet, vidit suscipit at mei.'
-          date='August 2021 - July 2025'
-          href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-        >
-          {
-            /* <ul class='ms-4 list-disc text-muted-foreground'>
-          <li>
-            Lorem, ipsum dolor sit amet consectetur adipisicing elit. Dolore debitis recusandae, ut
-            molestiae laboriosam pariatur!
-          </li>
-          <li>Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, pariatur!</li>
-        </ul> */
-          }
-        </Card>
-      </Section>
-
-      <Section title='Website List'>
-        <div class='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-          <ProjectCard
-            href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-            heading='Lorem ipsum'
-            subheading='Do not go gentle into that good night'
-            imagePath='/src/assets/projects/1.avif'
-          />
-          <ProjectCard
-            href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-            heading='Lorem ipsum'
-            subheading='Old age burn and rave at close of day'
-            imagePath='/src/assets/projects/2.avif'
-          />
-          <ProjectCard
-            href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-            heading='Lorem ipsum'
-            subheading='Rage, rage against the dying of the light'
-            imagePath='/src/assets/projects/3.avif'
-          />
-          <ProjectCard
-            href='/projects'
-            heading='More projects'
-            subheading='Check out more projects'
-            imagePath='/src/assets/projects/4.avif'
+      <div class='justify-self-center md:justify-self-end'>
+        <div class='relative grid size-52 place-items-center rounded-full border bg-muted/50 sm:size-64'>
+          <div class='absolute inset-6 rounded-full border border-dashed border-muted-foreground/35'></div>
+          <Image
+            src={images[imagePath]()}
+            alt={config.logo.alt || 'Profile'}
+            class='size-32 rounded-full border bg-background object-cover p-1 shadow-sm sm:size-40'
+            loading='eager'
+            fetchpriority='high'
           />
         </div>
-      </Section>
+      </div>
+    </section>
 
-      <Section title='Certifications'>
-        <Card
-          as='a'
-          heading='Lorem ipsum'
-          subheading='Lorem ipsum dolor sit amet, vidit suscipit at mei. Quem denique mea id. Usu ei regione indoctum dissentiunt, cu meliore fuisset mei, vel quod voluptua ne. Ex dicat impedit mel, at eum oratio possit voluptatum. Dicat ceteros cu vim. Impetus fuisset ullamcorper pri cu, his posse iisque ad, aliquam honestatis usu id.'
-          date='July 2024'
-          href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-        />
-      </Section>
+    <div id='content' class='animate flex w-full flex-col gap-y-12 md:w-5/6'>
+      <section class='grid gap-4 md:grid-cols-3'>
+        {
+          noteCategories.map((category) => (
+            <a
+              href={`/docs/${category.items[0]?.id ?? ''}`}
+              class={`rounded-lg border-l-4 bg-muted/35 px-5 py-4 transition-colors hover:bg-muted ${category.accent}`}
+            >
+              <p class='text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground'>
+                {category.items.length} notes
+              </p>
+              <h2 class='mt-2 text-lg font-medium'>{category.title}</h2>
+              <p class='mt-2 text-sm leading-6 text-muted-foreground'>{category.summary}</p>
+            </a>
+          ))
+        }
+      </section>
 
-      <Section title='Skills'>
-        <SkillLayout title='Languages' skills={languages} />
-        <SkillLayout title='Frontend' skills={frontend} />
-        <SkillLayout title='Backend' skills={backend} />
-      </Section>
+      <section class='grid gap-8 lg:grid-cols-[1.1fr_0.9fr]'>
+        <div class='flex min-w-0 flex-col gap-y-4'>
+          <div class='flex items-end justify-between gap-4'>
+            <div>
+              <h2 class='text-2xl font-medium'>最近杂想</h2>
+              <p class='mt-1 text-sm text-muted-foreground'>按时间记录的想法、文章和片段。</p>
+            </div>
+            <Button title='全部' href='/blog' />
+          </div>
+          {
+            thoughts.length > 0 ? (
+              <ul class='flex flex-col gap-y-3'>
+                {thoughts.map((post) => (
+                  <li class='rounded-lg border bg-background px-4 py-3 transition-colors hover:bg-muted/40'>
+                    <PostPreview post={post} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class='rounded-lg border px-4 py-3 text-muted-foreground'>暂无杂想。</p>
+            )
+          }
+        </div>
+
+        <div class='flex min-w-0 flex-col gap-y-4'>
+          <div class='flex items-end justify-between gap-4'>
+            <div>
+              <h2 class='text-2xl font-medium'>最近更新的笔记</h2>
+              <p class='mt-1 text-sm text-muted-foreground'>从树形笔记库里抽出的最新条目。</p>
+            </div>
+            <Button title='目录' href='/docs' />
+          </div>
+          <ol class='flex flex-col gap-y-2'>
+            {
+              recentNotes.map((note) => (
+                <li>
+                  <a
+                    href={`/docs/${note.id}`}
+                    class='group flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-muted/40'
+                  >
+                    <span class='mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground group-hover:text-foreground'>
+                      <Icon name='document' class='size-4' />
+                    </span>
+                    <span class='min-w-0'>
+                      <span class='block font-medium'>{note.data.title}</span>
+                      <span class='mt-1 block line-clamp-2 text-sm leading-6 text-muted-foreground'>
+                        {note.data.description}
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </section>
     </div>
-    <Quote class='mt-12' />
   </main>
 </PageLayout>

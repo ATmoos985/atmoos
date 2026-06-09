@@ -1,39 +1,105 @@
 ---
-import { Button, Icon } from 'astro-pure/user'
-import { cn } from 'astro-pure/utils'
-import PageLayout from '@/layouts/BaseLayout.astro'
-import { integ } from '@/site-config'
+import { type CollectionEntry } from 'astro:content'
 
-import DocsContents from './DocsContents.astro'
+import { getBlogCollection } from 'astro-pure/server'
+import { Button, Icon } from 'astro-pure/user'
+import PageLayout from '@/layouts/BaseLayout.astro'
+
+import DocsContents from '@/components/docs/DocsContents.astro'
+
+const docsCollection = (await getBlogCollection('docs')) as CollectionEntry<'docs'>[]
+
+const categoryMeta: Record<string, { title: string; summary: string; order: number }> = {
+  setup: {
+    title: '建站与配置',
+    summary: '从站点启动到内容发布的基础笔记。',
+    order: 1
+  },
+  integrations: {
+    title: '功能组件',
+    summary: '搜索、评论、展示组件和内容增强。',
+    order: 2
+  },
+  advanced: {
+    title: '维护优化',
+    summary: '升级、性能、主题和长期维护经验。',
+    order: 3
+  }
+}
+
+const grouped = docsCollection.reduce<Record<string, CollectionEntry<'docs'>[]>>((acc, doc) => {
+  const category = doc.id.split('/')[0] ?? 'misc'
+  acc[category] ??= []
+  acc[category].push(doc)
+  return acc
+}, {})
+
+const categories = Object.entries(grouped)
+  .map(([id, docs]) => ({
+    id,
+    count: docs.length,
+    first: docs.sort((a, b) => a.data.order - b.data.order)[0],
+    meta: categoryMeta[id] ?? {
+      title: id,
+      summary: '持续整理中的笔记分组。',
+      order: 999
+    }
+  }))
+  .sort((a, b) => a.meta.order - b.meta.order || a.meta.title.localeCompare(b.meta.title))
 
 const meta = {
-  title: 'Docs',
-  description: 'Docs content documentation'
+  title: '笔记库',
+  description: '按主题整理的长期知识库笔记'
 }
 ---
 
 <PageLayout {meta}>
-  <Button title='Back' href='/' variant='back' />
+  <Button title='返回' href='/' variant='back' />
   <main class='mt-6 lg:mt-10'>
     <div id='content-header' class='animate'>
-      <h1 class='mb-6 text-3xl font-medium'>Docs of Astro Theme Pure</h1>
+      <p class='mb-3 text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground'>
+        Knowledge Base
+      </p>
+      <h1 class='text-3xl font-medium sm:text-4xl'>笔记库</h1>
+      <p class='mt-4 max-w-2xl leading-8 text-muted-foreground'>
+        用树形结构沉淀长期有效的内容。每个主题是一组可持续更新的笔记，适合放教程、经验、清单和复盘。
+      </p>
     </div>
 
-    <div id='content' class={cn('animate mt-8 max-w-none md:min-w-[45ch]', integ.typography.class)}>
-      <h2 class='text-xl font-medium'>Theme documentation</h2>
-      <DocsContents title={false} />
+    <div id='content' class='animate mt-10 grid gap-10 lg:grid-cols-[0.9fr_1.1fr]'>
+      <section class='flex flex-col gap-y-4'>
+        <div class='grid gap-3 sm:grid-cols-3 lg:grid-cols-1'>
+          {
+            categories.map(({ count, first, meta }) => (
+              <a
+                href={first ? `/docs/${first.id}` : '/docs'}
+                class='rounded-lg border bg-muted/30 px-5 py-4 transition-colors hover:bg-muted'
+              >
+                <div class='flex items-center justify-between gap-3'>
+                  <h2 class='text-lg font-medium'>{meta.title}</h2>
+                  <span class='rounded-full border px-2 py-0.5 text-xs text-muted-foreground'>
+                    {count}
+                  </span>
+                </div>
+                <p class='mt-2 text-sm leading-6 text-muted-foreground'>{meta.summary}</p>
+              </a>
+            ))
+          }
+        </div>
 
-      <h2 class='text-xl font-medium'>Feedback</h2>
-      <p>
-        If you have any problems, you can check <a
-          href='https://github.com/cworld1/astro-theme-pure/issues'
-          target='_blank'>Github Issues</a
-        > for community support.
-      </p>
-      <h2 class='text-xl font-medium'>News Describe (Alpha)</h2>
-      <p>
-        <a href='/docs/rss.xml' target='_blank'><Icon name='rss' /> </a>
-      </p>
+        <a
+          href='/docs/rss.xml'
+          target='_blank'
+          class='inline-flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground'
+        >
+          <Icon name='rss' class='size-4' />
+          笔记库 RSS
+        </a>
+      </section>
+
+      <section class='rounded-lg border bg-background px-5 py-5'>
+        <DocsContents title={false} />
+      </section>
     </div>
   </main>
 </PageLayout>
