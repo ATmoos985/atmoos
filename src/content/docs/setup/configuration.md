@@ -1,47 +1,35 @@
 ---
-title: 'Configuration'
-description: 'Configuration files'
+title: '站点配置'
+description: '记录站点标题、导航、头像、评论和搜索等配置位置。'
 order: 4
 ---
 
-## Theme Configuration
+## 配置入口
 
-File: `src/site.config.ts`
+站点的核心配置集中在 `src/site.config.ts`。
 
-pending update...
+目前最常改的字段有：
 
-## Astro Configuration
+- `title`：站点名称。
+- `description`：站点摘要。
+- `logo`：头像图片和替代文本。
+- `nav`：顶部导航。
+- `integ`：搜索、评论、统计等集成功能。
 
-File: `astro.config.ts`
+## 头像
 
-You can configure it to change deployment methods, add rehype & remark plugins, and more.
+头像图片放在 `src/assets` 下，再通过 `logo.src` 引用。这样 Astro 会参与构建处理，不需要手动维护 public 路径。
 
-Read more about Astro configuration [here](https://docs.astro.build/en/guides/configuring-astro/).
+如果之后想换成真人照片、插画或品牌头像，只需要替换图片并改配置即可。
 
-## ESLint Configuration
+## 导航
 
-File: `eslint.config.mjs`
+导航应该保持短：
 
-You can configure ESLint to change rules and security checks.
+- 杂想
+- 笔记库
+- 项目
+- 友链
+- 关于
 
-Read more about ESLint configuration [here](https://eslint.org/docs/latest/use/configure/configuration-files).
-
-## Prettier Configuration
-
-File: `prettier.config.mjs`
-
-You can configure Prettier to change code formatting rules, this can change your experience using package command `format` and extension support for your favorite IDE.
-
-Options are available [here](https://prettier.io/docs/en/options).
-
-## UnoCSS Configuration
-
-File: `uno.config.ts`
-
-It is a utility-first CSS framework building custom designs. Theme also uses its preset `typography` to make type settings.
-
-Checkout [UnoCSS & Styles ](/docs/integrations/unocss) for more info.
-
-## Typescript Configuration
-
-File: `tsconfig.json`
+如果以后内容变多，可以在笔记库内部做树形目录，不建议把所有分类都塞进顶部导航。

@@ -1,10 +1,24 @@
 ---
 layout: '@/layouts/IndividualPage.astro'
 
-title: 'Copyright'
-description: 'Effective date: 2024-11-26'
-language: 'En'
+title: '版权声明'
+description: '生效日期：2026-06-09'
+language: '中文'
 back: '/terms/list'
 ---
 
-It may be recommended to generate policies from [PolicyMaker.io](https://policymaker.io).
+## 内容版权
+
+除另有说明外，本站原创文字、整理笔记和页面内容归作者所有。
+
+引用、转载或二次整理时，请保留来源链接。
+
+## 第三方内容
+
+站内可能引用开源项目、框架文档、图片资源或外部链接。
+
+这些内容的版权归原作者或对应项目所有，本站只做学习和整理用途。
+
+## 联系与调整
+
+如果某段内容存在版权问题，可以通过评论或项目仓库联系，我会核对后处理。

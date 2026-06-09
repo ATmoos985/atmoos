@@ -1,26 +1,30 @@
 ---
-title: 'Draft Page'
+title: '草稿示例'
 publishDate: '2025-07-03'
 updatedDate: '2025-07-10'
-description: 'Draft page for any purpose'
+description: '用于测试草稿显示和本地预览的示例内容。'
 tags:
-  - Draft
-language: 'English'
-# Remove or set false to turn draft page into normal ones
+  - 草稿
+language: '中文'
+# 删除这一行或改成 false 后，草稿就会变成正式内容
 draft: true
 ---
 
-```log title="hello.log"
-test
-test
-```
+这是一篇草稿示例，用来确认草稿在本地和生产环境中的展示行为。
 
-> Test
+## 草稿用途
 
-Test `inline code`
+适合临时保存：
 
-| Header 1 | Header 2 | Header 3 |
-| -------- | -------- | -------- |
-| Row 1    | Data 1   | Data 2   |
-| Row 2    | Data 1   | Data 2   |
-| Row 3    | Data 1   | Data 2   |
+- 还没整理完的想法。
+- 不确定是否公开的内容。
+- 需要继续补资料的笔记。
+
+## 发布前检查
+
+正式发布前需要确认：
+
+1. 标题和摘要是否清楚。
+2. 标签是否准确。
+3. 内容是否适合公开。
+4. `draft` 是否已经关闭。

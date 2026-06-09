@@ -1,30 +1,33 @@
 ---
-title: The Impact of Technology on the Music World
+title: 音乐与技术的随想
 publishDate: 2024-11-30
-description: 'The evolution of music is a symphony of creativity, rhythm, and technology.'
+description: '一些关于音乐、工具和创作方式变化的零散想法。'
 tags:
-  - Example
-  - Music
-  - Technology
+  - 音乐
+  - 技术
+  - 杂想
 heroImage: { src: './thumbnail.jpg', color: '#4891B2' }
-language: 'English'
+language: '中文'
 ---
 
-The evolution of music is a symphony of creativity, rhythm, and technology. From the humble beginnings of acoustic instruments to the present-day digital era, the relationship between music and technology has been transformative. In this article, we will explore the historical milestones, digital revolution, and emerging technologies that have shaped the music world. Join us on a journey through the chords of innovation as we discuss how technology has changed music.
+音乐和技术的关系很有意思。
 
-## Historical Perspective
+工具越来越强之后，创作门槛确实降低了，但真正难的部分没有消失：判断、审美、取舍和持续表达。
 
-The marriage of music and technology dates back centuries, with pivotal moments shaping the industry. The invention of the phonograph by Thomas Edison in the late 19th century marked the first time music could be recorded and replayed. Subsequent milestones, such as the electric guitar and the synthesizer, revolutionized music creation, paving the way for new genres and sounds.
+## 工具的作用
 
-These technological leaps didn't merely shape the musical landscape of their time but laid a foundation for the continuous evolution of the intersection between music and technology. As artists embraced these innovations, they unlocked new avenues for creativity, paving the way for diverse sounds and genres that have become integral to the vibrant tapestry of the modern music industry. The historical perspective illuminates the symbiotic relationship between music and technology, highlighting the transformative impact that each innovation has had on the way we create, consume, and experience music.
+工具可以帮助人更快试错。
 
-## Digital Revolution
+它能让一个想法更快变成可听、可看、可分享的东西，但它不能替代人判断这个东西是否值得保留。
 
-The digital revolution has been a seismic shift in the music industry, altering how music is consumed, distributed, and produced. The transition from physical formats like CDs and vinyl to digital formats such as MP3s and streaming services has democratized access to music. The ease of streaming has transformed how listeners discover and enjoy music, challenging traditional revenue models while offering unparalleled convenience.
+## 记录的意义
 
-## Technology in Music Consumption and Distribution
+很多创作想法不是一次成型的。
 
-Streaming services have become the heartbeat of music consumption, causing a decline in traditional music stores. The accessibility of music online has reshaped distribution channels, impacting both artists and record labels. While it provides exposure to a global audience, it also poses challenges regarding fair compensation for artists. The dynamics of the industry are evolving, reflecting the intricate dance between technology and music.
-Music Production and Creation
+把它们记录下来，过一段时间再看，才能知道哪些只是当时的冲动，哪些值得继续发展。
 
-The advent of digital audio workstations (DAWs), software instruments, and electronic production techniques has democratized music creation. Artists now have powerful tools at their fingertips, enabling them to experiment with sounds, collaborate remotely, and produce music independently. This technological shift has broken down barriers, allowing for a diverse array of voices to be heard in the ever-expanding realm of music.
+## 暂时结论
+
+技术越方便，越需要一个稳定的记录系统。
+
+否则产生内容很容易，留下真正有价值的东西反而更难。

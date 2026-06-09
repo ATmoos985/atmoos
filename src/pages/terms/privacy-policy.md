@@ -1,10 +1,28 @@
 ---
 layout: '@/layouts/IndividualPage.astro'
 
-title: 'Privacy Policy'
-description: 'Effective date: 2024-11-26'
-language: 'En'
+title: '隐私政策'
+description: '生效日期：2026-06-09'
+language: '中文'
 back: '/terms/list'
 ---
 
-It may be recommended to generate policies from [PolicyMaker.io](https://policymaker.io).
+## 基本原则
+
+本站是个人记录站，不主动收集访客的敏感个人信息。
+
+如果后续启用评论、统计或搜索服务，可能会由对应第三方服务处理必要的访问数据。
+
+## 可能涉及的数据
+
+目前可能涉及的数据包括：
+
+- 浏览器访问日志。
+- 评论时填写的昵称、邮箱或网址。
+- 第三方服务用于防垃圾评论和访问统计的必要信息。
+
+## 说明
+
+本站会尽量减少不必要的数据收集。
+
+如果将来接入新的第三方服务，会在这里补充说明。

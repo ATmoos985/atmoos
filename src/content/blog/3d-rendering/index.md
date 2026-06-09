@@ -1,49 +1,38 @@
 ---
-title: 'What Is 3D Rendering? Complete Guide to 3D Visualization'
+title: '为什么保留一个私人笔记站'
 publishDate: 2025-02-09
 updatedDate: 2025-02-24
-description: '3D imagery has the power to bring cinematic visions to life and help accurately plan tomorrow’s cityscapes. Here, 3D expert Ricardo Ortiz explains how it works.'
+description: '记录我为什么把博客改成杂想和知识库，而不是继续维护一个模板文章列表。'
 tags:
-  - Example
-  - 3D
-language: 'English'
+  - 记录
+  - 建站
+language: '中文'
 heroImage: { src: './thumbnail.jpg', color: '#D58388' }
 ---
 
-3D rendering is all around us. From huge action movies to car commercials to previews of upcoming buildings or product designs, 3D visualization has become so widespread and realistic that you probably don’t even know it’s there.
+我想保留一个自己的站点，不是为了把它做成一个很正式的博客，而是为了有一个长期可控的记录位置。
 
-In this introductory piece, Chaos’ Ricardo Ortiz explains the basics of 3D rendering, from the computational methods that create imagery to the artistic techniques that create great computer-generated (CG) content and its various uses.
+社交平台适合发布，笔记软件适合私有整理，但它们都不完全等同于一个公开的个人知识入口。
 
-## What is 3D Rendering?
+## 为什么不只是博客
 
-Put simply, 3D rendering is the process of using a computer to generate a 2D image from a digital three-dimensional scene.
+传统博客很容易变成按时间排列的文章仓库。
 
-To generate an image, specific methodologies and special software and hardware are used. Therefore, we need to understand that 3D rendering is a process—the one that builds the image.
+这种方式适合回看某个时间点写了什么，但当内容越来越多时，读者和自己都很难按主题找到东西。
 
-![alt text](./nikola-arsov-still-life-interior-design-vray-3ds-max-05-930px.jpg)
+所以这个站点需要两条线：
 
-## Types of 3D rendering
+- 杂想保留时间感。
+- 笔记库保留结构感。
 
-We can create different types of rendered image; they can be realistic or non-realistic.
+## 为什么不只是知识库
 
-A realistic image could be an architectural interior that looks like a photograph, a product-design image such as a piece of furniture, or an automotive rendering of a car. On the other hand, we can create a non-realistic image such as an outline-type diagram or a cartoon-style image with a traditional 2D look. Technically, we can visualize anything we can imagine.
+如果所有东西都必须整理成知识库，写作门槛会变高。
 
-## How is 3D rendering used?
+很多想法刚出现时并不完整，只适合先记下来。等它们反复出现、变得稳定，再整理成笔记。
 
-3D rendering is an essential technique for many industries including architecture, product design, advertising, video games and visual effects for film, TV and animation.
+## 当前判断
 
-In design and architecture, renders allow creative people to communicate their ideas in a clear and transparent way. A render gives them the chance to evaluate their proposals, experiment with materials, conduct studies and contextualize their designs in the real world before they are built or manufactured.
+站点应该先服务记录，再考虑展示。
 
-For the media and entertainment industries, 3D rendering is fundamental to the creation of sequences and animations that tell stories, whether we’re watching an animated movie, a period drama, or an action sequence with explosions, ships from the future, exotic locales, or extraterrestrial creatures.
-
-![alt text](./thanos-dd-single-image-004a.jpg)
-
-Over the past few years, the evolution of computer graphics in these industries has replaced traditional techniques. For example, special effects are being replaced by visual effects, which means stunt people no longer risk their lives in car crashes.
-
-In advertising, I would dare to say that 90% of automotive commercials are CG—or even more. In the architecture industry, many traditional techniques to create representations, such as scale models, have been replaced with photorealistic imagery to ensure we can see exactly how something will look once it’s built.
-
-Accelerating processes, reducing costs and the demand for better quality results have helped technology evolve. Hardware is more powerful than ever and the switch to CG was inevitable.
-
-## How is a 3D rendered image generated?
-
-Two pieces of software, with different characteristics, are used to computer-generate images and animations: render engines and game engines. Render engines use a technique called ray tracing, while game engines use a technique called rasterization—and some engines mix both techniques, but we will talk about that later on.
+展示可以慢慢变好，但记录入口必须足够简单。

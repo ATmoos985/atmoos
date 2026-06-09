@@ -1,221 +1,33 @@
 ---
-title: 'Getting Started'
-description: 'Get started with the Astro Theme Pure'
+title: '笔记库入口设计'
+description: '说明本站为什么采用杂想时间流和树形笔记库并存的结构。'
 order: 1
 ---
 
-import { Steps, Aside, Tabs, TabItem } from 'astro-pure/user'
+## 目标
 
-## Installation
+这个站点不再只做传统博客列表，而是保留两种入口：
 
-Two way to install. "Template" way is lightweight and simple, but hard to update; while "Fork" way is easy to update but needs some skills for git.
+- **杂想**：按时间记录，适合放临时想法、短文章、阶段性复盘。
+- **笔记库**：按主题组织，适合沉淀可复用的知识、流程和资料索引。
 
-### Install Using Template
+这样做的好处是，新的想法可以先快速进入时间流，之后再把有价值的内容整理到树形笔记里。
 
-<Aside type='tip'>
-Astro has a great article teaching you setting up project: [Install and set up Astro #Use a theme or starter template](https://docs.astro.build/en/install-and-setup/#use-a-theme-or-starter-template) 
-</Aside>
+## 首页结构
 
-<Steps>
+首页应该先说明站点的用途，然后给出两个清晰入口：
 
-1. Install the theme
+- 想随便看看近期记录，就进入杂想。
+- 想找某一类知识，就进入笔记库。
 
-   Execute the following command in the your user directory to install the theme:
-   
-   <Tabs>
-   <TabItem label='bun'>
-   ```shell
-   bun create astro@latest --template cworld1/astro-theme-pure
-   ```
-   <Aside type='tip'>
-   For Bun, if the installation is slow, it is recommended to use a mirror configuration by creating `bunfig.toml` under the project root directory:
+下面的卡片只做概览，不承担完整目录功能，避免首页变得太重。
 
-   ```toml title="bunfig.toml"
-   [install]
-   registry = "<npm mirror site>"
-   ```
+## 笔记库结构
 
-   For details about other PM mirror configs, you may need to see their official documents.
-   </Aside>
-   </TabItem>
-   <TabItem label='pnpm'>
-   ```shell
-   pnpm create astro@latest --template cworld1/astro-theme-pure
-   ```
-   </TabItem>
-   <TabItem label='yarn'>
-   ```shell
-   yarn create astro --template cworld1/astro-theme-pure
-   ```
-   </TabItem>
-   <TabItem label='npm'>
-   ```shell
-   npm create astro@latest -- --template cworld1/astro-theme-pure
-   ```
-   </TabItem>
-   </Tabs>
+笔记库采用三层以内的树形结构：
 
-   By default, this command will use the template repository’s main branch. To use a different branch name, pass it as part of the `--template` argument: `cworld1/astro-theme-pure#<branch>`.
+1. 一级目录放主题，例如站点搭建、写作工作流、内容组件。
+2. 二级目录放具体问题，例如部署、配置、搜索、评论。
+3. 单篇笔记只解决一个主题，不把太多问题混在一起。
 
-2. Answer the questions and follow the instructions of the CLI wizard.
-
-3. VOILA!
-
-   You can now [start the Astro dev server](https://docs.astro.build/en/install-and-setup/#start-the-astro-dev-server) and see a live preview of your project while you make it your own!
-
-</Steps>
-
-### Install Using Fork
-
-You only need to [click fork button at theme repository](https://github.com/cworld1/astro-theme-pure/fork) to create your project; then clone the forked repository to your local machine.
-
-```shell
-git clone https://github.com/<your-username>/astro-theme-pure.git
-```
-
-Then, you can start the Astro dev server and see a live preview of your project while you make it your own!
-
-## Start the Dev Server
-
-Go to your project directory:
-
-```shell
-cd ./<your-project>
-```
-
-<Tabs>
-<TabItem label='bun'>
-```shell
-bun dev
-```
-</TabItem>
-<TabItem label='pnpm'>
-```shell
-pnpm dev
-```
-</TabItem>
-<TabItem label='yarn'>
-```shell
-yarn run dev
-```
-</TabItem>
-<TabItem label='npm'>
-```shell
-npm run dev
-```
-</TabItem>
-</Tabs>
-
-Next, please read the configuration notes first and continue configuring the theme.
-
-## Migrate to Astro
-
-See [Astro: Migrate an existing project to Astro](https://docs.astro.build/en/guides/migrate-to-astro/).
-
-## Theme File Structure
-
-The theme file structure is as follows:
-
-- `public`: Static resources that will be copied to the root directory
-- `src`:
-  - `assets`: Static resources
-  - `components`: Components used in the theme, also include user-like components, like `Card`, `Collapse`, `Spoiler`, etc.
-  - `layouts`: Basic site layouts
-  - `pages`: Pages like `404`, `about`, `blog`, `docs`, `index`, etc.
-  - `plugins`: Extended plugins used in the theme
-  - `types`: Typescript type definitions
-  - `utils`: Utilities
-  - `site.config.ts`: Theme configuration file
-- `astro.config.ts`: Astro configuration file
-- `eslint.config.mjs`: ESLint configuration file
-- `prettier.config.mjs`: Prettier configuration file
-- `uno.config.ts`: UnoCSS configuration file
-- `tsconfig.json`: Typescript configuration file
-- `package.json`: Package information
-
-## Simple Setup
-
-
-<Steps>
-
-1. Remove docs files
-
-   - Remove the `src/pages/docs` directory
-   - Remove the menu declaration in `src/site.config.ts`:
-   
-   ```ts title="src/site.config.ts"
-   export const theme: ThemeUserConfig = {
-      // ...
-      /** Configure the header of your site. */
-      header: {
-         menu: [
-            { title: 'Blog', link: '/blog' },
-            { title: 'Docs', link: '/docs' }, // [!code --]
-            // ...
-         ],
-      },
-   }
-   ```
-
-   - Remove the Content Collection for docs in `src/content.config.ts`:
-
-   ```ts title="src/content.config.ts"
-   const docs = defineCollection({ // [!code --]
-   loader: glob({ base: './src/content/docs', pattern: '**/*.{md,mdx}' }), // [!code --]
-   schema: ({ image }) => // [!code --]
-      z.object({ // [!code --]
-         ... // [!code --]
-      }) // [!code --]
-   }) // [!code --]
-   export const collections = { blog, docs } // [!code --]
-   export const collections = { blog } // [!code ++]
-   ```
-
-2. Remove `packages` directory (this will be imported by our NPM package).
-
-   And remember to change the `workspaces` field in `package.json`:
-
-   ```json title="package.json"
-   {
-     "name": "astro-theme-pure",
-     "workspaces": [ // [!code --]
-       "packages/*" // [!code --]
-     ], // [!code --]
-     // ...
-   }
-   ```
-
-3. Change the site favicon.
-
-   <Aside type='tip'>
-   [Favicon.io](https://favicon.io/) is a great tool that can help you generate favicons quickly.
-   </Aside>
-
-   Replace the `public/favicon/*` files with your own favicon.
-
-4. Replace your avatar image.
-
-   Replace the `src/assets/avatar.png` file with your own avatar image.
-
-5. Configure the site
-
-   You can configure your project inside the `src/site.config.ts` configuration file:
-
-   ```ts title="src/site.config.ts"
-   export const theme: ThemeUserConfig = {
-      author: 'CWorld',
-      title: 'Astro Theme Pure',
-      site: 'https://astro-pure.js.org',
-      description: 'Stay hungry, stay foolish',
-      // ...
-   }
-
-   export const integ: IntegrationUserConfig = { /* ... */ }
-   // ...
-   ```
-
-6. Typescript Syntax
-
-   The configuration file `site.config.ts` uses Typescript syntax. If you are not familiar with TS syntax, please read about it [here](https://learnxinyminutes.com/docs/typescript/) first.
-
-</Steps>
+后续如果笔记数量增加，可以再加标签和全文搜索，但目录结构应该先稳定下来。

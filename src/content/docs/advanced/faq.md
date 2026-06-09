@@ -1,52 +1,29 @@
 ---
-title: 'FAQs'
-description: 'Frequently asked questions'
+title: '常见问题'
+description: '收集维护这个站点时遇到的常见问题和处理方式。'
 order: 4
 ---
 
-## Path
+## 为什么还保留杂想？
 
-### Blog specific path
+不是所有记录都值得立刻整理成知识库。
 
-Routing blogs format like `/blog/:year/:id`
+杂想适合承接还没成型的想法，之后再挑选其中有价值的内容沉淀为笔记。
 
-See [4.0.2-beta如何使文章链接中包含年份](https://github.com/cworld1/astro-theme-pure/discussions/37#discussioncomment-11905851).
+## 为什么不用纯时间线？
 
-## Content
+时间线适合回看最近发生了什么，但不适合查找长期知识。
 
-### Support web images for `heroImage`
+所以本站同时保留时间线和树形目录。
 
-It should be used with `inferSize: true` to get the image size. Example:
+## 能不能网页端直接上传文章？
 
-```yaml
-heroImage:
-  { src: 'https://img.tukuppt.com/ad_preview/00/15/09/5e715a320b68e.jpg!/fw/980', inferSize: true }
-```
+可以，但静态站本身不能直接写入仓库。
 
-## Build
+要实现网页端上传，需要接入 CMS、GitHub API、数据库或后端服务。这个功能应该单独设计权限、草稿、发布和回滚流程。
 
-### Vite Block Request
+## 为什么先中文化而不是先做后台？
 
-```log
-Blocked request. This host ("xxx")is not allowed.
-To allow this host, add "xxx" to `preview.allowedHosts` in vite.config.js.
-```
+内容结构是后台功能的前提。
 
-See [option server.allowedHosts doesn't take into account "true"](https://github.com/vitejs/vite/issues/19242)
-
-### Problem with `BUN_LINK_PKG`
-
-See [BUN_LINK_PKG 环境变量无法设置成功](https://github.com/cworld1/astro-theme-pure/issues/51)
-
-### Build No "Exports" Main Defined
-
-```log
-07:39:23 [ERROR] [@astrojs/vercel] An unhandled error occurred while running the "astro:build:done" hook
-No "exports" main defined in /vercel/path0/node_modules/estree-walker/package.json
-  Stack trace:
-    ...
-```
-
-Try redeploy your project without existing build cache.
-
-Detail: [oven-sh/bun/issues: error No "exports" main defined in /vercel/path0/node_modules/estree-walker/package.json](https://github.com/oven-sh/bun/issues/7241)
+先把站点定位、目录和文案理顺，再做上传入口，后续实现会更稳。

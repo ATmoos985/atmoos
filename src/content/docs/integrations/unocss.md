@@ -1,66 +1,27 @@
 ---
-title: 'UnoCSS & Styles'
-description: 'Change the appearance of the site & create custom styles'
+title: '样式系统'
+description: '记录 UnoCSS、排版样式和局部视觉调整方式。'
 order: 6
 ---
 
-## UnoCSS Change Appearance
+## 当前方式
 
-You can customize the theme default UnoCSS palette by modifying the CSS file at `src/assets/styles/app.css`. For example, if you want to change the default theme color, you can modify the following code:
+站点使用主题内置样式和 UnoCSS 工具类。
 
-```css title="src/assets/styles/app.css"
-:root {
-  /* ... */
-  --primary: 200 29% 45%; /* [!code --] */
-  --primary: <Your favorite color using raw hsl>; /* [!code ++] */
-}
-```
+页面调整优先使用已有组件和工具类，只有在确实影响整体视觉时再写额外 CSS。
 
-And the same way to change the default font family, you can modify the following code:
+## 修改原则
 
-```css title="src/assets/styles/app.css"
-:root {
-  /* ... */
-  font-family: 'Satoshi'; /* [!code --] */
-  src: url('/fonts/Satoshi-Variable.ttf'); /* [!code --] */
-  font-family: '<Your favorite font family>'; /* [!code ++] */
-  src: url('/fonts/<Your favorite font>.ttf'); /* [!code ++] */
-}
-```
+- 少改全局变量。
+- 少加一次性复杂样式。
+- 优先保持页面间一致。
+- 移动端和桌面端都要检查。
 
-Make sure to put your custom font file in the `public/fonts` directory.
+## 可继续优化的点
 
-## UnoCSS Configuration
+后续可以统一：
 
-File: `uno.config.ts`
-
-Get to know more:
-
-- [UnoCSS: Astro Integration](https://unocss.dev/integrations/astro)
-- [UnoCSS: Configuring UnoCSS](https://unocss.dev/config)
-
-## `@unocss/preset-typography`
-
-Typography config can be modified in `uno.config.ts`:
-
-```js title="uno.config.ts"
-const typographyConfig = {
-  // prettier-ignore
-  cssExtend: { // [!code highlight:3]
-    // ...
-  }
-}
-```
-
-But if you want to customize the typography by UnoCSS, or just change the preset typography theme, you can do it in `src/site.config.ts`:
-
-```ts title="src/site.config.ts"
-export const integ: IntegrationUserConfig = {
-  // ...
-  typography: {
-    class: 'prose text-base text-muted-foreground' // [!code highlight]
-  }
-}
-```
-
-Checkout [Typography preset](https://unocss.dev/presets/typography) for more.
+- 首页卡片密度。
+- 笔记库树形目录样式。
+- 文章列表的日期和标签显示。
+- 暗色模式下的对比度。

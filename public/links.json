@@ -2,7 +2,7 @@
   "friends": [
     {
       "id_name": "cf-links",
-      "desc": "Common links included in circle friends",
+      "desc": "常用友链",
       "link_list": [
         {
           "name": "Arthals' ink",
@@ -20,16 +20,16 @@
     },
     {
       "id_name": "inactive-links",
-      "desc": "Inactive or rule-breaking friends",
+      "desc": "暂时不可访问或不再维护的链接",
       "link_list": []
     },
     {
       "id_name": "special-links",
-      "desc": "Other special links",
+      "desc": "特别链接",
       "link_list": [
         {
           "name": "Astro",
-          "intro": "The web framework for content-driven websites",
+          "intro": "面向内容网站的前端框架",
           "link": "https://astro.build/",
           "avatar": "https://avatars.githubusercontent.com/u/44914786?s=200&v=4"
         }

@@ -17,8 +17,8 @@ export const theme: ThemeUserConfig = {
     }
   },
   logo: {
-    src: '/src/assets/avatar.png',
-    alt: 'Atmoos avatar'
+    src: '/src/assets/avatar-atmoos.png',
+    alt: 'Atmoos 文字头像'
   },
 
   titleDelimiter: '-',
@@ -38,7 +38,7 @@ export const theme: ThemeUserConfig = {
   },
 
   footer: {
-    year: `Copyright ${new Date().getFullYear()}`,
+    year: `© ${new Date().getFullYear()} Ami`,
     links: [
       {
         title: '站点说明',
@@ -67,10 +67,10 @@ export const integ: IntegrationUserConfig = {
       { date: '2026-06-09', content: '杂想保留时间流，笔记库保留结构。' }
     ],
     applyTip: [
-      { name: 'Name', val: theme.title },
-      { name: 'Desc', val: theme.description || 'Null' },
-      { name: 'Link', val: 'https://atmoos.vercel.app/' },
-      { name: 'Avatar', val: 'https://atmoos.vercel.app/favicon/favicon.ico' }
+      { name: '名称', val: theme.title },
+      { name: '描述', val: theme.description || '个人记录站' },
+      { name: '链接', val: 'https://atmoos.vercel.app/' },
+      { name: '头像', val: 'https://atmoos.vercel.app/favicon/favicon.ico' }
     ],
     cacheAvatar: false
   },
@@ -100,7 +100,7 @@ export const integ: IntegrationUserConfig = {
       pageview: true,
       comment: true,
       locale: {
-        reaction0: 'Like',
+        reaction0: '喜欢',
         placeholder: '欢迎留下想法。'
       },
       imageUploader: false

@@ -1,10 +1,26 @@
 ---
 layout: '@/layouts/IndividualPage.astro'
 
-title: 'Terms and Conditions'
-description: 'Last updated: 2024-11-26'
-language: 'En'
+title: '使用条款'
+description: '最后更新：2026-06-09'
+language: '中文'
 back: '/terms/list'
 ---
 
-It may be recommended to generate policies from [PolicyMaker.io](https://policymaker.io).
+## 使用范围
+
+本站内容主要用于个人记录、学习整理和公开分享。
+
+访问本站即表示你理解这里的内容可能包含阶段性观点、草稿式记录和后续会调整的笔记。
+
+## 内容使用
+
+可以引用本站公开内容，但请注明来源。
+
+不建议把这里的临时观点当作最终结论使用。涉及技术、法律、财务、医疗等高风险事项时，应以权威资料和实际验证为准。
+
+## 站点变更
+
+本站结构和内容会持续调整。
+
+页面路径、标题、分类和内容可能随着整理过程变化。
