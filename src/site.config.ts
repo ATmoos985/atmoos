@@ -92,13 +92,13 @@ export const integ: IntegrationUserConfig = {
     }
   },
   waline: {
-    enable: true,
-    server: 'https://astro-theme-pure-waline.arthals.ink/',
+    enable: false,
+    server: '',
     showMeta: false,
     emoji: ['bmoji', 'weibo'],
     additionalConfigs: {
-      pageview: true,
-      comment: true,
+      pageview: false,
+      comment: false,
       locale: {
         reaction0: '喜欢',
         placeholder: '欢迎留下想法。'
