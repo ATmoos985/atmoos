@@ -147,9 +147,7 @@ if (!images[imagePath])
             thoughts.length > 0 ? (
               <ul class='flex flex-col gap-y-3'>
                 {thoughts.map((post) => (
-                  <li class='rounded-lg border bg-background px-4 py-3 transition-colors hover:bg-muted/40'>
-                    <PostPreview post={post} />
-                  </li>
+                  <PostPreview post={post} />
                 ))}
               </ul>
             ) : (
