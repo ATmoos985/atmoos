@@ -29,7 +29,11 @@ export const theme: ThemeUserConfig = {
 
   header: {
     menu: [
+      { title: '首页', link: '/' },
       { title: '笔记', link: '/docs' },
+      { title: '专题', link: '/topics' },
+      { title: '项目', link: '/projects' },
+      { title: '近况', link: '/now' },
       { title: 'CV', link: '/cv' },
       { title: '关于', link: '/about' }
     ]

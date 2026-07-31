@@ -1,0 +1,434 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+
+const focusLines = [
+  {
+    number: '01',
+    label: 'SOLVER WORK',
+    title: 'APS、组合优化与 Timefold',
+    description: '继续围绕生产排程问题理解求解模型、约束评分与可验证的调优过程。',
+    href: '/topics',
+    linkLabel: '查看专题路径'
+  },
+  {
+    number: '02',
+    label: 'PUBLIC NOTES',
+    title: '公开笔记整理',
+    description: '把已有 Timefold 学习笔记重新分组、补齐索引，并维持可复查的阅读顺序。',
+    href: '/docs',
+    linkLabel: '进入笔记目录'
+  },
+  {
+    number: '03',
+    label: 'SITE ITERATION',
+    title: '站点迭代',
+    description: '让首页、栏目入口与笔记阅读界面更紧凑，也更适合持续维护。',
+    href: 'https://github.com/ATmoos985/atmoos',
+    linkLabel: '查看站点源码',
+    external: true
+  }
+]
+---
+
+<BaseLayout
+  meta={{
+    title: '此刻',
+    description: 'Ami 在 2026 年 7 月公开整理中的三个当前焦点。'
+  }}
+  highlightColor='#d65a34'
+>
+  <main class='now-page' aria-labelledby='now-title'>
+    <header class='now-head animate' id='content-header'>
+      <div class='date-block' aria-label='更新时间 2026 年 7 月'>
+        <span>UPDATED</span>
+        <strong>2026.07</strong>
+      </div>
+
+      <div class='now-title'>
+        <p class='eyebrow'>Now / working desk</p>
+        <h1 id='now-title'>此刻在做什么。</h1>
+        <p>
+          这不是履历，也不是成果清单；只记录当前公开可见的工作重心。内容会随着笔记与站点整理继续更新。
+        </p>
+      </div>
+
+      <div class='desk-mark' aria-hidden='true'>
+        <span>AMI’S</span>
+        <strong>NOW</strong>
+        <span>WORKING EDITION</span>
+      </div>
+    </header>
+
+    <section class='focus-board animate' id='content' aria-labelledby='focus-title'>
+      <div class='board-heading'>
+        <h2 id='focus-title'>当前三条工作线</h2>
+        <span>03 ACTIVE THREADS</span>
+      </div>
+
+      <ol>
+        {
+          focusLines.map((line) => (
+            <li>
+              <div class='line-index'>
+                <strong>{line.number}</strong>
+                <span>{line.label}</span>
+              </div>
+              <div class='line-copy'>
+                <h3>{line.title}</h3>
+                <p>{line.description}</p>
+              </div>
+              <a
+                href={line.href}
+                target={line.external ? '_blank' : undefined}
+                rel={line.external ? 'noreferrer' : undefined}
+              >
+                <span>{line.linkLabel}</span>
+                <span aria-hidden='true'>{line.external ? '↗' : '→'}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <footer class='now-foot'>
+      <span>2026.07 / PUBLIC WORK LOG</span>
+      <p>范围：APS · 组合优化 · Timefold · 公开笔记 · 个人站</p>
+    </footer>
+  </main>
+</BaseLayout>
+
+<style>
+  .now-page {
+    padding-block: clamp(1.5rem, 3vw, 2.5rem) clamp(2rem, 5vw, 4rem);
+  }
+
+  .now-head {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr) 10rem;
+    gap: clamp(1.5rem, 5vw, 5rem);
+    align-items: center;
+    min-height: clamp(18rem, 38vh, 24rem);
+    padding-block: clamp(1.5rem, 3vw, 2.5rem);
+    border-block: 1px solid hsl(var(--foreground) / 0.78);
+  }
+
+  .date-block,
+  .eyebrow,
+  .desk-mark,
+  .board-heading,
+  .line-index,
+  .focus-board a,
+  .now-foot {
+    font-family: var(--mono-font);
+  }
+
+  .date-block {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0.9rem;
+    border: 1px solid hsl(var(--foreground));
+    background: hsl(var(--card) / 0.42);
+  }
+
+  .date-block span {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+  }
+
+  .date-block strong {
+    color: hsl(var(--primary));
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .eyebrow {
+    margin: 0 0 1.1rem;
+    color: hsl(var(--primary));
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--display-font);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(3.8rem, 9vw, 8rem);
+    font-weight: 500;
+    line-height: 0.9;
+    letter-spacing: -0.065em;
+    text-wrap: balance;
+  }
+
+  .now-title > p:last-child {
+    max-width: 43rem;
+    margin: 1.75rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.96rem;
+    line-height: 1.85;
+  }
+
+  .desk-mark {
+    display: grid;
+    align-content: center;
+    min-height: 10rem;
+    padding: 1rem;
+    border: 2px solid hsl(var(--primary));
+    color: hsl(var(--primary));
+    text-align: center;
+    transform: rotate(2deg);
+  }
+
+  .desk-mark span {
+    font-size: 0.54rem;
+    letter-spacing: 0.13em;
+  }
+
+  .desk-mark strong {
+    padding-block: 0.45rem;
+    font-family: var(--display-font);
+    font-size: 2.4rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .focus-board {
+    padding-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  .board-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid hsl(var(--foreground));
+  }
+
+  .board-heading h2 {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 500;
+  }
+
+  .board-heading span {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.64rem;
+    letter-spacing: 0.1em;
+  }
+
+  .focus-board ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-left: 1px solid hsl(var(--border));
+  }
+
+  .focus-board li {
+    display: flex;
+    min-height: 21rem;
+    flex-direction: column;
+    padding: clamp(1.25rem, 2.6vw, 2rem);
+    border-right: 1px solid hsl(var(--border));
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--card) / 0.25);
+  }
+
+  .line-index {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .line-index strong {
+    color: hsl(var(--primary));
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .line-index span {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+  }
+
+  .line-copy {
+    padding-top: clamp(2.4rem, 4vw, 4rem);
+  }
+
+  .line-copy h3 {
+    margin: 0;
+    font-size: clamp(1.75rem, 3vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.04em;
+  }
+
+  .line-copy p {
+    margin: 1rem 0 2rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.87rem;
+    line-height: 1.75;
+  }
+
+  .focus-board a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: auto;
+    padding-top: 0.8rem;
+    border-top: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    font-size: 0.75rem;
+    text-decoration: none;
+  }
+
+  .focus-board a span:last-child {
+    color: hsl(var(--primary));
+    font-size: 1rem;
+  }
+
+  .focus-board a:hover,
+  .focus-board a:focus-visible {
+    color: hsl(var(--primary));
+  }
+
+  .focus-board a:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 0.35rem;
+  }
+
+  .now-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+  }
+
+  .now-foot p {
+    margin: 0;
+  }
+
+  @media (max-width: 1180px) {
+    .now-head {
+      grid-template-columns: 6.5rem minmax(0, 1fr);
+    }
+
+    .desk-mark {
+      display: none;
+    }
+
+    .focus-board ol {
+      grid-template-columns: 1fr;
+    }
+
+    .focus-board li {
+      display: grid;
+      grid-template-columns: 7rem minmax(0, 1fr) 11rem;
+      gap: 2rem;
+      min-height: 0;
+      align-items: center;
+    }
+
+    .line-index {
+      display: flex;
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .line-copy {
+      padding-top: 0;
+    }
+
+    .line-copy p {
+      margin-bottom: 0;
+    }
+
+    .focus-board a {
+      margin-top: 0;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .now-page {
+      padding-top: 1.5rem;
+    }
+
+    .now-head {
+      display: block;
+      min-height: 0;
+    }
+
+    .date-block {
+      min-height: 0;
+      flex-direction: row;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .date-block strong {
+      writing-mode: initial;
+      transform: none;
+    }
+
+    h1 {
+      font-size: clamp(3.4rem, 18vw, 5.2rem);
+    }
+
+    .board-heading {
+      align-items: flex-end;
+    }
+
+    .board-heading span {
+      max-width: 8rem;
+      text-align: right;
+    }
+
+    .focus-board li {
+      display: flex;
+      min-height: 18rem;
+      gap: 0;
+    }
+
+    .line-index {
+      align-items: baseline;
+      flex-direction: row;
+    }
+
+    .line-copy {
+      padding-top: 2.5rem;
+    }
+
+    .line-copy p {
+      margin-bottom: 2rem;
+    }
+
+    .focus-board a {
+      margin-top: auto;
+    }
+
+    .now-foot {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>

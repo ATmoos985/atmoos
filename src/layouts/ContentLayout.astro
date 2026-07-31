@@ -17,9 +17,20 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
 
 <PageLayout {meta} {highlightColor} {...props}>
   <div class='content-layout'>
-    <a class='content-back mono-label' href={back}>← 返回笔记目录</a>
-
     <main class='content-grid'>
+      <aside id='sidebar' class='content-sidebar animate' aria-label='笔记目录'>
+        <div class='sidebar-mobile-head'>
+          <span class='mono-label'>Notebook navigation</span>
+          <button id='sidebar-close' type='button' aria-label='关闭笔记目录'>
+            <span aria-hidden='true'>×</span>
+          </button>
+        </div>
+        <div class='sidebar-inner'>
+          <a class='content-back mono-label' href={back}>← 返回笔记目录</a>
+          <slot name='sidebar' />
+        </div>
+      </aside>
+
       <article class='content-article'>
         <header id='content-header' class='animate'>
           <slot name='header' />
@@ -36,12 +47,6 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
           <slot name='bottom' />
         </footer>
       </article>
-
-      <aside id='sidebar' class='content-sidebar animate'>
-        <div class='sidebar-inner'>
-          <slot name='sidebar' />
-        </div>
-      </aside>
     </main>
 
     <div id='sidebar-shade' aria-hidden='true'></div>
@@ -52,7 +57,7 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
       slot='other-icons'
       aria-controls='sidebar'
       aria-expanded='false'
-      aria-label='打开文章目录'
+      aria-label='打开笔记目录'
       class='sidebar-button'
       id='sidebar-btn'
       type='button'
@@ -64,9 +69,33 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
 
 <script>
   const sidebarButton = document.getElementById('sidebar-btn')
+  const sidebarClose = document.getElementById('sidebar-close')
   const sidebar = document.getElementById('sidebar')
   const sidebarShade = document.getElementById('sidebar-shade')
-  const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  const focusableSelector =
+    'a[href], button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'
+  const mobileQuery = window.matchMedia('(max-width: 1100px)')
+
+  const getFocusable = () => {
+    if (!sidebar) return []
+
+    return [...sidebar.querySelectorAll<HTMLElement>(focusableSelector)].filter((element) => {
+      const closedGroup = element.closest('details:not([open])')
+      if (
+        closedGroup &&
+        !(element.tagName === 'SUMMARY' && element.parentElement === closedGroup)
+      ) {
+        return false
+      }
+
+      const style = window.getComputedStyle(element)
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        element.getClientRects().length > 0
+      )
+    })
+  }
 
   const sidebarIsOpen = () => sidebar?.classList.contains('show') ?? false
 
@@ -80,22 +109,24 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
     if (isOpen) {
       sidebar?.setAttribute('role', 'dialog')
       sidebar?.setAttribute('aria-modal', 'true')
-      sidebar?.setAttribute('aria-label', '文章目录')
-      requestAnimationFrame(() => sidebar?.querySelector<HTMLElement>(focusableSelector)?.focus())
+      window.setTimeout(() => (sidebarClose ?? getFocusable()[0])?.focus(), 230)
       return
     }
 
     sidebar?.removeAttribute('role')
     sidebar?.removeAttribute('aria-modal')
-    sidebar?.removeAttribute('aria-label')
     if (wasOpen && restoreFocus) sidebarButton?.focus()
   }
 
   sidebarButton?.addEventListener('click', () => setSidebar(!sidebarIsOpen()))
+  sidebarClose?.addEventListener('click', () => setSidebar(false))
   sidebarShade?.addEventListener('click', () => setSidebar(false))
   sidebar?.addEventListener('click', (event) => {
     const target = event.target
-    if (target instanceof Element && target.closest('a[href]')) setSidebar(false, false)
+    const link = target instanceof Element ? target.closest('a[href]') : undefined
+    if (mobileQuery.matches && link) {
+      setSidebar(false, link.getAttribute('href')?.startsWith('#') ?? false)
+    }
   })
 
   document.addEventListener('keydown', (event) => {
@@ -108,7 +139,7 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
     }
 
     if (event.key !== 'Tab' || !sidebar) return
-    const focusable = [...sidebar.querySelectorAll<HTMLElement>(focusableSelector)]
+    const focusable = getFocusable()
     if (!focusable.length) return
 
     const first = focusable[0]
@@ -122,8 +153,8 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
     }
   })
 
-  window.matchMedia('(min-width: 801px)').addEventListener('change', ({ matches }) => {
-    if (matches) setSidebar(false, false)
+  mobileQuery.addEventListener('change', ({ matches }) => {
+    if (!matches) setSidebar(false, false)
   })
 </script>
 
@@ -134,14 +165,18 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
 
   .content-back {
     display: inline-flex;
-    margin-bottom: 2rem;
+    margin-bottom: 1.4rem;
     color: hsl(var(--muted-foreground));
+  }
+
+  .content-back:hover {
+    color: hsl(var(--foreground));
   }
 
   .content-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(14rem, 17rem);
-    gap: clamp(2.5rem, 6vw, 5.5rem);
+    grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr);
+    gap: clamp(2.5rem, 5vw, 4.75rem);
     align-items: start;
   }
 
@@ -154,11 +189,16 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
     top: 6.2rem;
     max-height: calc(100vh - 7.5rem);
     overflow: auto;
+    overscroll-behavior: contain;
     scrollbar-width: thin;
   }
 
   .sidebar-inner {
     padding-bottom: 2rem;
+  }
+
+  .sidebar-mobile-head {
+    display: none;
   }
 
   .article-prose {
@@ -176,9 +216,13 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
     position: fixed;
     inset: 0;
     z-index: 60;
-    display: none;
+    visibility: hidden;
     background: hsl(var(--foreground) / 0.5);
     backdrop-filter: blur(3px);
+    opacity: 0;
+    transition:
+      opacity 180ms ease,
+      visibility 180ms ease;
   }
 
   .sidebar-button {
@@ -195,7 +239,7 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
     overflow: hidden;
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 1100px) {
     .content-grid {
       display: block;
     }
@@ -203,25 +247,78 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
     .content-sidebar {
       position: fixed;
       top: 0;
-      right: 0;
+      left: 0;
       z-index: 70;
-      display: none;
       width: min(88vw, 23rem);
       max-height: 100dvh;
       height: 100dvh;
-      padding: 2rem 1.25rem;
-      border-left: 1px solid hsl(var(--border));
+      padding: 1rem 1.25rem 2rem;
+      border-right: 1px solid hsl(var(--border));
       background: hsl(var(--background));
-      box-shadow: -12px 0 30px hsl(var(--foreground) / 0.14);
+      box-shadow: 12px 0 30px hsl(var(--foreground) / 0.14);
+      visibility: hidden;
+      transform: translateX(-104%);
+      transition:
+        transform 220ms ease,
+        visibility 220ms ease;
     }
 
-    .content-sidebar.show,
+    .content-sidebar.show {
+      visibility: visible;
+      transform: translateX(0);
+    }
+
     #sidebar-shade.show {
-      display: block;
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .sidebar-mobile-head {
+      position: sticky;
+      top: -1rem;
+      z-index: 2;
+      display: flex;
+      min-height: 3.75rem;
+      align-items: center;
+      justify-content: space-between;
+      margin: -1rem -1.25rem 1.2rem;
+      padding: 0 1.25rem;
+      border-bottom: 1px solid hsl(var(--border));
+      background: hsl(var(--background) / 0.96);
+      backdrop-filter: blur(12px);
+    }
+
+    .sidebar-mobile-head span {
+      color: hsl(var(--muted-foreground));
+    }
+
+    #sidebar-close {
+      display: grid;
+      width: 2.35rem;
+      height: 2.35rem;
+      cursor: pointer;
+      place-items: center;
+      border: 1px solid hsl(var(--border));
+      color: hsl(var(--foreground));
+      background: hsl(var(--background));
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    #sidebar-close:hover {
+      border-color: hsl(var(--foreground));
+      color: hsl(var(--primary));
     }
 
     .sidebar-button {
       display: grid;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .content-sidebar,
+    #sidebar-shade {
+      transition: none;
     }
   }
 </style>

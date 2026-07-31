@@ -29,21 +29,29 @@ const docsCollection = (await getCollection(
   ({ data }) => !data.draft
 )) as CollectionEntry<'docs'>[]
 const currentPath = Astro.url.pathname
+const isCurrentPath = (id: string) => currentPath === `/docs/${id}`
 
 const trees = docsSeries
   .filter((series) => !selectedSeries || series.id === selectedSeries)
   .map((series) => {
     const seriesDocs = docsCollection.filter((doc) => doc.data.series === series.id)
     const overview = seriesDocs.find((doc) => doc.data.isIndex && !doc.data.section)
-    const sections = series.sections
-      .filter((section) => !selectedSection || section.id === selectedSection)
-      .map((section) => ({
+    const sections = series.sections.map((section) => {
+      const index = seriesDocs.find((doc) => doc.data.section === section.id && doc.data.isIndex)
+      const docs = seriesDocs
+        .filter((doc) => doc.data.section === section.id && !doc.data.isIndex)
+        .sort((a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title))
+
+      return {
         ...section,
-        index: seriesDocs.find((doc) => doc.data.section === section.id && doc.data.isIndex),
-        docs: seriesDocs
-          .filter((doc) => doc.data.section === section.id && !doc.data.isIndex)
-          .sort((a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title))
-      }))
+        index,
+        docs,
+        isCurrent:
+          selectedSection === section.id ||
+          (index ? isCurrentPath(index.id) : false) ||
+          docs.some((doc) => isCurrentPath(doc.id))
+      }
+    })
     return { ...series, overview, sections }
   })
 ---
@@ -64,21 +72,33 @@ const trees = docsSeries
 
   {
     trees.map((series) => (
-      <section class='ledger-series'>
-        {!compact && (
+      <section class='ledger-series' aria-labelledby={`ledger-series-${series.id}`}>
+        {compact ? (
+          <div class='ledger-context'>
+            <span>{series.number}</span>
+            <strong id={`ledger-series-${series.id}`}>{series.shortTitle}</strong>
+            {series.overview && (
+              <a
+                class:list={{ current: isCurrentPath(series.overview.id) }}
+                href={`/docs/${series.overview.id}`}
+                aria-current={isCurrentPath(series.overview.id) ? 'page' : undefined}
+              >
+                总索引
+              </a>
+            )}
+          </div>
+        ) : (
           <div class='ledger-series-head'>
             <span>{series.number}</span>
             <div>
-              <h3>{series.shortTitle}</h3>
+              <h3 id={`ledger-series-${series.id}`}>{series.shortTitle}</h3>
               <p>{series.summary}</p>
             </div>
             {series.overview && (
               <a
-                class:list={[
-                  'overview-link',
-                  { current: currentPath === `/docs/${series.overview.id}` }
-                ]}
+                class:list={['overview-link', { current: isCurrentPath(series.overview.id) }]}
                 href={`/docs/${series.overview.id}`}
+                aria-current={isCurrentPath(series.overview.id) ? 'page' : undefined}
               >
                 总索引 →
               </a>
@@ -88,35 +108,45 @@ const trees = docsSeries
 
         <ol class='ledger-sections'>
           {series.sections.map((section) => (
-            <li class='ledger-section'>
-              <div class='ledger-section-head'>
-                <span>{section.number}</span>
-                {section.index ? (
-                  <a
-                    class:list={{ current: currentPath === `/docs/${section.index.id}` }}
-                    href={`/docs/${section.index.id}`}
-                  >
-                    {section.title}
-                  </a>
-                ) : (
+            <li class:list={['ledger-section', { current: section.isCurrent }]}>
+              <details class='ledger-group' open={!compact || section.isCurrent}>
+                <summary class='ledger-section-head'>
+                  <span>{section.number}</span>
                   <strong>{section.title}</strong>
-                )}
-                <small>{section.docs.length}</small>
-              </div>
-              {!compact && <p class='ledger-section-summary'>{section.summary}</p>}
-              <ol class='ledger-docs'>
-                {section.docs.map((doc) => (
-                  <li>
-                    <a
-                      class:list={{ current: currentPath === `/docs/${doc.id}` }}
-                      href={`/docs/${doc.id}`}
-                    >
-                      <span>{String(doc.data.order).padStart(2, '0')}</span>
-                      <strong>{doc.data.title}</strong>
-                    </a>
-                  </li>
-                ))}
-              </ol>
+                  <small>{section.docs.length}</small>
+                  <span class='ledger-toggle' aria-hidden='true' />
+                </summary>
+
+                <div class='ledger-section-body'>
+                  {!compact && <p class='ledger-section-summary'>{section.summary}</p>}
+                  <ol class='ledger-docs'>
+                    {section.index && (
+                      <li class='index-note'>
+                        <a
+                          class:list={{ current: isCurrentPath(section.index.id) }}
+                          href={`/docs/${section.index.id}`}
+                          aria-current={isCurrentPath(section.index.id) ? 'page' : undefined}
+                        >
+                          <span>00</span>
+                          <strong>{section.index.data.title}</strong>
+                        </a>
+                      </li>
+                    )}
+                    {section.docs.map((doc) => (
+                      <li>
+                        <a
+                          class:list={{ current: isCurrentPath(doc.id) }}
+                          href={`/docs/${doc.id}`}
+                          aria-current={isCurrentPath(doc.id) ? 'page' : undefined}
+                        >
+                          <span>{String(doc.data.order).padStart(2, '0')}</span>
+                          <strong>{doc.data.title}</strong>
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </details>
             </li>
           ))}
         </ol>
@@ -187,6 +217,39 @@ const trees = docsSeries
     color: hsl(var(--primary));
   }
 
+  .ledger-context {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.65rem;
+    align-items: baseline;
+    padding: 0.8rem 0;
+    border-top: 1px solid hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .ledger-context > span,
+  .ledger-context a {
+    font-family: var(--mono-font);
+    font-size: 0.63rem;
+  }
+
+  .ledger-context > span,
+  .ledger-context a.current,
+  .ledger-context a:hover {
+    color: hsl(var(--primary));
+  }
+
+  .ledger-context strong {
+    color: hsl(var(--foreground));
+    font-family: var(--display-font);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .ledger-context a {
+    color: hsl(var(--muted-foreground));
+  }
+
   .ledger-sections,
   .ledger-docs {
     margin: 0;
@@ -208,9 +271,23 @@ const trees = docsSeries
     background: hsl(var(--card) / 0.24);
   }
 
+  .ledger-group summary {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .ledger-group summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ledger-group summary:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 0.35rem;
+  }
+
   .ledger-section-head {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     gap: 0.7rem;
     align-items: baseline;
   }
@@ -229,7 +306,6 @@ const trees = docsSeries
     color: hsl(var(--muted-foreground));
   }
 
-  .ledger-section-head a,
   .ledger-section-head strong {
     color: hsl(var(--foreground));
     font-family: var(--display-font);
@@ -237,8 +313,36 @@ const trees = docsSeries
     font-weight: 500;
   }
 
-  .ledger-section-head a.current {
+  .ledger-section.current .ledger-section-head strong {
     color: hsl(var(--primary));
+  }
+
+  .ledger-toggle {
+    position: relative;
+    width: 0.8rem;
+    height: 0.8rem;
+    align-self: center;
+  }
+
+  .ledger-toggle::before,
+  .ledger-toggle::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.65rem;
+    height: 1px;
+    content: '';
+    background: hsl(var(--muted-foreground));
+    transform: translate(-50%, -50%);
+    transition: transform 160ms ease;
+  }
+
+  .ledger-toggle::after {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  .ledger-group[open] .ledger-toggle::after {
+    transform: translate(-50%, -50%) rotate(0deg);
   }
 
   .ledger-section-summary {
@@ -269,9 +373,17 @@ const trees = docsSeries
   }
 
   .ledger-docs a.current {
-    box-shadow: inset 2px 0 0 hsl(var(--primary));
     padding-left: 0.55rem;
     background: hsl(var(--muted) / 0.42);
+    box-shadow: inset 2px 0 0 hsl(var(--primary));
+  }
+
+  .ledger-docs .index-note a {
+    color: hsl(var(--foreground));
+  }
+
+  .ledger-docs .index-note span {
+    color: hsl(var(--muted-foreground));
   }
 
   .ledger-docs span {
@@ -286,7 +398,7 @@ const trees = docsSeries
     font-size: 0.76rem;
     font-weight: 500;
     line-height: 1.45;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
 
   .docs-ledger.compact .ledger-sections {
@@ -297,17 +409,35 @@ const trees = docsSeries
   .docs-ledger.compact .ledger-section {
     padding: 0;
     border: 0;
+    border-bottom: 1px solid hsl(var(--border));
     background: transparent;
   }
 
   .docs-ledger.compact .ledger-section-head {
-    padding: 0.7rem 0;
-    border-top: 1px solid hsl(var(--foreground));
-    border-bottom: 1px solid hsl(var(--border));
+    padding: 0.78rem 0.2rem;
+  }
+
+  .docs-ledger.compact .ledger-section.current .ledger-section-head {
+    padding-left: 0.65rem;
+    background: hsl(var(--muted) / 0.32);
+    box-shadow: inset 2px 0 0 hsl(var(--primary));
+  }
+
+  .docs-ledger.compact .ledger-section-head strong {
+    font-family: var(--body-font);
+    font-size: 0.78rem;
+    line-height: 1.35;
   }
 
   .docs-ledger.compact .ledger-docs {
     margin-top: 0;
+    padding: 0.2rem 0 0.45rem 0.65rem;
+    border-top: 1px solid hsl(var(--border) / 0.72);
+    background: hsl(var(--card) / 0.18);
+  }
+
+  .docs-ledger.compact .ledger-docs a {
+    padding-block: 0.52rem;
   }
 
   @media (max-width: 720px) {

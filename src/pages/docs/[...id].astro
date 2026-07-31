@@ -70,14 +70,19 @@ const noteCode = [
   <Fragment slot='sidebar'>
     {
       headings.length > 0 && (
-        <div class='article-toc'>
-          <p class='mono-label'>On this page</p>
-          <TOC {headings} />
-        </div>
+        <details class='article-toc' open={headings.length <= 5}>
+          <summary>
+            <span class='mono-label'>On this page</span>
+            <small>{headings.length.toString().padStart(2, '0')}</small>
+          </summary>
+          <div class='article-toc-body'>
+            <TOC {headings} />
+          </div>
+        </details>
       )
     }
     <DocsContents
-      class='section-toc'
+      class='notes-navigation'
       title={false}
       compact
       series={data.series}
@@ -261,17 +266,47 @@ const noteCode = [
   }
 
   .article-toc {
-    margin-bottom: 1.6rem;
-    padding-bottom: 1.2rem;
+    margin-bottom: 1.4rem;
     border-bottom: 1px solid hsl(var(--border));
   }
 
-  .article-toc > p {
-    margin: 0 0 0.75rem;
+  .article-toc summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem 0;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .article-toc summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .article-toc summary:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 0.25rem;
+  }
+
+  .article-toc summary > span {
     color: hsl(var(--primary));
   }
 
-  .section-toc {
+  .article-toc summary > small {
+    color: hsl(var(--muted-foreground));
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+  }
+
+  .article-toc-body {
+    max-height: min(16rem, 35vh);
+    padding: 0 0 1rem;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  .notes-navigation {
     display: block;
   }
 

@@ -1,0 +1,385 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+
+const publicProjects = [
+  {
+    number: '01',
+    kind: 'SITE / SOURCE',
+    title: 'Atmoos 个人站',
+    status: '已公开',
+    description: '用于整理和发布公开技术内容的个人网站；源码可在 GitHub 查看。',
+    href: 'https://github.com/ATmoos985/atmoos',
+    linkLabel: '查看 GitHub 仓库',
+    external: true
+  },
+  {
+    number: '02',
+    kind: 'PUBLIC NOTEBOOK',
+    title: 'Timefold 公开笔记库',
+    status: '持续整理',
+    description: '围绕配置运行、领域建模、约束评分、算法、Benchmark 与调优组织的公开笔记。',
+    href: '/docs',
+    linkLabel: '进入公开笔记库',
+    external: false
+  }
+]
+---
+
+<BaseLayout
+  meta={{
+    title: '项目',
+    description: 'Ami 当前已经公开、可以直接核验的项目与内容入口。'
+  }}
+  highlightColor='#d65a34'
+>
+  <main class='projects-page' aria-labelledby='projects-title'>
+    <header class='projects-head animate' id='content-header'>
+      <div class='issue-code'>PUBLIC—02</div>
+      <div>
+        <p class='eyebrow'>Projects / verified list</p>
+        <h1 id='projects-title'>只列已经公开、<br />可以核验的项目。</h1>
+      </div>
+      <p class='intro'>
+        这里不使用占位成果补全履历。当前只保留本站源码与 Timefold 公开笔记两个真实入口。
+      </p>
+    </header>
+
+    <section class='project-register animate' id='content' aria-label='公开项目清单'>
+      <div class='register-head' aria-hidden='true'>
+        <span>NO. / TYPE</span>
+        <span>PUBLIC RECORD</span>
+        <span>STATUS</span>
+        <span>ENTRY</span>
+      </div>
+
+      <ol>
+        {
+          publicProjects.map((project) => (
+            <li>
+              <div class='project-code'>
+                <strong>{project.number}</strong>
+                <span>{project.kind}</span>
+              </div>
+              <div class='project-copy'>
+                <h2>{project.title}</h2>
+                <p>{project.description}</p>
+              </div>
+              <div class:list={['project-status', { working: project.status === '持续整理' }]}>
+                <span aria-hidden='true' />
+                {project.status}
+              </div>
+              <a
+                class='project-link'
+                href={project.href}
+                target={project.external ? '_blank' : undefined}
+                rel={project.external ? 'noreferrer' : undefined}
+              >
+                <span>{project.linkLabel}</span>
+                <span aria-hidden='true'>{project.external ? '↗' : '→'}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <aside class='scope-note'>
+      <span class='stamp' aria-hidden='true'>VERIFIED</span>
+      <div>
+        <p class='note-title'>公开范围</p>
+        <p>项目名称、链接与状态都来自当前仓库可确认的信息；未核对的经历与成果不在本页展示。</p>
+      </div>
+    </aside>
+  </main>
+</BaseLayout>
+
+<style>
+  .projects-page {
+    padding-block: clamp(2.5rem, 7vw, 5.5rem) clamp(2rem, 5vw, 4rem);
+  }
+
+  .projects-head {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr) minmax(16rem, 0.48fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    align-items: end;
+    padding-block: clamp(1.5rem, 4vw, 3rem);
+    border-block: 1px solid hsl(var(--foreground) / 0.78);
+  }
+
+  .issue-code,
+  .eyebrow,
+  .register-head,
+  .project-code,
+  .project-status,
+  .project-link,
+  .stamp {
+    font-family: var(--mono-font);
+  }
+
+  .issue-code {
+    align-self: start;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+  }
+
+  .eyebrow {
+    margin: 0 0 1rem;
+    color: hsl(var(--primary));
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  h1,
+  h2,
+  .note-title {
+    font-family: var(--display-font);
+  }
+
+  h1 {
+    max-width: 15ch;
+    margin: 0;
+    font-size: clamp(3rem, 6.2vw, 5.8rem);
+    font-weight: 500;
+    line-height: 0.97;
+    letter-spacing: -0.055em;
+    text-wrap: balance;
+  }
+
+  .intro {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.93rem;
+    line-height: 1.85;
+  }
+
+  .project-register {
+    padding-top: clamp(3rem, 6vw, 5rem);
+  }
+
+  .register-head,
+  .project-register li {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr) 8.5rem 12rem;
+    gap: clamp(1rem, 3vw, 2.5rem);
+  }
+
+  .register-head {
+    padding: 0 1rem 0.8rem;
+    border-bottom: 1px solid hsl(var(--foreground));
+    color: hsl(var(--muted-foreground));
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+  }
+
+  .project-register ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .project-register li {
+    align-items: center;
+    padding: clamp(1.4rem, 3vw, 2.2rem) 1rem;
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--card) / 0.22);
+  }
+
+  .project-register li:hover {
+    background: hsl(var(--muted) / 0.38);
+  }
+
+  .project-code {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .project-code strong {
+    color: hsl(var(--primary));
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+
+  .project-code span {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+  }
+
+  .project-copy h2 {
+    margin: 0;
+    font-size: clamp(1.7rem, 3vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+  }
+
+  .project-copy p {
+    max-width: 42rem;
+    margin: 0.75rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.86rem;
+    line-height: 1.75;
+  }
+
+  .project-status {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: hsl(var(--foreground));
+    font-size: 0.7rem;
+  }
+
+  .project-status > span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--accent-cool);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-cool) 18%, transparent);
+  }
+
+  .project-status.working > span {
+    background: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.14);
+  }
+
+  .project-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-block: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    font-size: 0.75rem;
+    text-decoration: none;
+  }
+
+  .project-link span:last-child {
+    color: hsl(var(--primary));
+    font-size: 1rem;
+  }
+
+  .scope-note {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    padding: clamp(1.3rem, 3vw, 2rem);
+    border: 1px solid hsl(var(--foreground) / 0.72);
+    background: hsl(var(--card) / 0.42);
+  }
+
+  .stamp {
+    display: grid;
+    align-self: start;
+    min-height: 3.8rem;
+    place-items: center;
+    border: 2px solid hsl(var(--primary));
+    color: hsl(var(--primary));
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    transform: rotate(-2deg);
+  }
+
+  .scope-note p {
+    margin: 0;
+  }
+
+  .scope-note .note-title {
+    color: hsl(var(--foreground));
+    font-size: 1.35rem;
+    font-weight: 600;
+  }
+
+  .scope-note p:last-child {
+    max-width: 46rem;
+    margin-top: 0.45rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.84rem;
+    line-height: 1.75;
+  }
+
+  @media (max-width: 1180px) {
+    .projects-head {
+      grid-template-columns: 5rem minmax(0, 1fr);
+    }
+
+    .intro {
+      grid-column: 2;
+      max-width: 38rem;
+    }
+
+    .register-head {
+      display: none;
+    }
+
+    .project-register li {
+      grid-template-columns: 7rem minmax(0, 1fr) 11rem;
+    }
+
+    .project-status {
+      align-self: start;
+      justify-self: end;
+    }
+
+    .project-link {
+      grid-column: 2 / -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .projects-page {
+      padding-top: 1.5rem;
+    }
+
+    .projects-head {
+      display: block;
+    }
+
+    .issue-code {
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: clamp(2.75rem, 14vw, 4.2rem);
+    }
+
+    .intro {
+      margin-top: 1.5rem;
+    }
+
+    .project-register li {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1.5rem 1rem;
+      padding-inline: 0;
+    }
+
+    .project-code {
+      grid-column: 1;
+    }
+
+    .project-status {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .project-copy,
+    .project-link {
+      grid-column: 1 / -1;
+    }
+
+    .scope-note {
+      grid-template-columns: 1fr;
+    }
+
+    .stamp {
+      width: 8rem;
+    }
+  }
+</style>

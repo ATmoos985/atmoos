@@ -22,471 +22,358 @@ const sections = series.sections.map((section) => {
 const recentNotes = [...articles]
   .sort(
     (a, b) =>
-      (b.data.updatedDate?.valueOf() ?? 0) - (a.data.updatedDate?.valueOf() ?? 0) ||
+      (b.data.updatedDate?.valueOf() ?? b.data.publishDate?.valueOf() ?? 0) -
+        (a.data.updatedDate?.valueOf() ?? a.data.publishDate?.valueOf() ?? 0) ||
       a.data.sectionOrder - b.data.sectionOrder ||
       a.data.order - b.data.order
   )
-  .slice(0, 6)
+  .slice(0, 4)
+
+const formatDate = (date?: Date) =>
+  date
+    ? new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(date)
+    : '持续整理'
 
 const getSectionTitle = (note: CollectionEntry<'docs'>) =>
-  series.sections.find((section) => section.id === note.data.section)?.title ?? '教程'
+  series.sections.find((section) => section.id === note.data.section)?.shortTitle ?? '笔记'
+
+const entries = [
+  { code: '02', title: '专题', note: '沿知识路径浏览', href: '/topics', mark: '↗' },
+  { code: '03', title: '项目', note: '公开项目与实践', href: '/projects', mark: '↗' },
+  { code: '04', title: '近况', note: '此刻关注什么', href: '/now', mark: '→' },
+  { code: '05', title: 'CV', note: '核对中的履历', href: '/cv', mark: '→' },
+  { code: '06', title: '关于', note: '边界与整理方式', href: '/about', mark: '→' },
+  { code: '⌕', title: '搜索', note: '定位概念与类名', href: '/search', mark: '↗' }
+]
 ---
 
 <PageLayout
   meta={{
     title: '首页',
-    description: 'Ami 的公开技术笔记，当前聚焦组合优化、生产排程与 Timefold Solver。'
+    description: 'Ami 的个人工作台与公开技术笔记，聚焦组合优化、生产排程与 Timefold Solver。'
   }}
   highlightColor={series.color}
 >
-  <main class='home-page'>
-    <section class='home-hero animate' id='content-header'>
-      <div class='hero-copy'>
-        <p class='mono-label hero-kicker'>Optimization / Scheduling / Solver</p>
-        <h1 class='editorial-title'>把求解器经验，<br />整理成能复查的方法。</h1>
-        <p class='hero-lead'>
-          这里是 Ami 的公开技术笔记。当前先整理生产排程、组合优化和 Timefold Solver， 内容从
-          Obsidian 笔记中筛选、脱敏，再变成适合网页阅读的知识树。
+  <main class='home-dashboard'>
+    <header class='home-intro animate' id='content-header'>
+      <div class='intro-title'>
+        <p class='mono-label'>Atmoos / Personal workbench</p>
+        <h1 class='editorial-title'>当前正在整理什么。</h1>
+      </div>
+
+      <div class='intro-note'>
+        <p>
+          这里记录生产排程、组合优化与求解器工程。内容从真实笔记中筛选，保留推理路径，也标出仍在变化的部分。
         </p>
-        <div class='hero-actions'>
-          <a class='note-button' href={overview ? `/docs/${overview.id}` : '/docs'}>
-            从 Timefold 开始 <span aria-hidden='true'>→</span>
-          </a>
-          <a class='note-button secondary' href='/docs'>浏览全部笔记</a>
-        </div>
+        <span><i aria-hidden='true'></i> PUBLIC NOTES · CONTINUOUSLY EDITED</span>
       </div>
+    </header>
 
-      <aside class='field-sheet' aria-label='首批公开笔记概况'>
-        <div class='field-sheet-head'>
-          <span class='mono-label'>Public notebook</span>
-          <strong>01</strong>
-        </div>
-        <div class='solver-map' aria-hidden='true'>
-          <span>业务问题</span>
-          <i></i>
-          <span>领域模型</span>
-          <i></i>
-          <span>约束评分</span>
-          <i></i>
-          <span>搜索与验证</span>
-        </div>
-        <div class='field-sheet-title'>
-          <p>TIMEFOLD SOLVER</p>
-          <h2 class='editorial-title'>从“能跑”到“可信”</h2>
-        </div>
-        <dl>
-          <div><dt>章节</dt><dd>{series.sections.length}</dd></div>
-          <div><dt>正文</dt><dd>{articles.length}</dd></div>
-          <div><dt>状态</dt><dd>持续整理</dd></div>
-        </dl>
-        <p class='field-note'>OBSIDIAN → PUBLIC REVIEW → WEB</p>
-      </aside>
-    </section>
-
-    <section class='release-strip animate' id='content'>
-      <span class='mono-label'>Release 2026.07</span>
-      <p>
-        首批公开 <strong>{seriesDocs.length}</strong> 篇索引与笔记；工作项目回链没有进入公开站点。
-      </p>
-      <a href='/about'>查看整理边界 →</a>
-    </section>
-
-    <section class='chapters-section'>
-      <div class='section-heading'>
-        <div>
-          <p class='mono-label'>Notebook structure</p>
-          <h2 class='editorial-title'>六章，而不是一堆标签。</h2>
-        </div>
-        <p>学习路径按真实求解流程排列：先运行，再建模和写约束，最后用算法、实验与调优验证结果。</p>
-      </div>
-
-      <ol class='chapter-grid'>
-        {
-          sections.map((section) => (
-            <li>
-              <a
-                href={
-                  section.index
-                    ? `/docs/${section.index.id}`
-                    : section.first
-                      ? `/docs/${section.first.id}`
-                      : '/docs'
-                }
-              >
-                <div class='chapter-topline'>
-                  <span>{section.number}</span>
-                  <span>{section.notes.length.toString().padStart(2, '0')} notes</span>
-                </div>
-                <h3>{section.title}</h3>
-                <p>{section.summary}</p>
-                <span class='chapter-arrow' aria-hidden='true'>
-                  ↗
-                </span>
-              </a>
-            </li>
-          ))
-        }
-      </ol>
-    </section>
-
-    <section class='home-lower-grid'>
-      <div class='recent-panel'>
-        <div class='panel-title'>
+    <section class='workbench-grid animate' id='content' aria-label='站点主要入口'>
+      <article class='focus-board'>
+        <header class='board-head'>
           <div>
-            <p class='mono-label'>Reading queue</p>
-            <h2 class='editorial-title'>从这些笔记进入</h2>
+            <span class='mono-label'>Current notebook / 01</span>
+            <span class='edition'>2026.07</span>
           </div>
-          <a href='/docs'>完整目录 →</a>
+          <strong>{String(articles.length).padStart(2, '0')} notes</strong>
+        </header>
+
+        <div class='focus-copy'>
+          <p>{series.eyebrow}</p>
+          <h2 class='editorial-title'>{series.shortTitle}</h2>
+          <p>{series.summary}</p>
+          <a class='note-button' href={overview ? `/docs/${overview.id}` : '/docs'}>
+            打开笔记工作区 <span aria-hidden='true'>→</span>
+          </a>
         </div>
-        <ol class='recent-list'>
+
+        <ol class='route-map' aria-label='Timefold 笔记分组'>
           {
-            recentNotes.map((note, index) => (
+            sections.map((section) => (
               <li>
-                <a href={`/docs/${note.id}`}>
-                  <span class='recent-number'>{String(index + 1).padStart(2, '0')}</span>
-                  <span class='recent-copy'>
-                    <strong>{note.data.title}</strong>
-                    <small>{getSectionTitle(note)}</small>
-                  </span>
-                  <span aria-hidden='true'>→</span>
+                <a
+                  href={
+                    section.index
+                      ? `/docs/${section.index.id}`
+                      : section.first
+                        ? `/docs/${section.first.id}`
+                        : '/docs'
+                  }
+                >
+                  <span>{section.number}</span>
+                  <strong>{section.shortTitle}</strong>
+                  <small>{section.notes.length}</small>
                 </a>
               </li>
             ))
           }
         </ol>
-      </div>
+      </article>
 
-      <aside class='cv-panel'>
-        <p class='mono-label'>Profile / reserved</p>
-        <span class='cv-monogram'>CV</span>
-        <h2 class='editorial-title'>经历留白，先不拿模板凑数。</h2>
-        <p>CV 已预留结构。经历、教育与项目会在核对公开范围后补入；现在只展示已经发布的真实内容。</p>
-        <a href='/cv'>查看 CV 占位页 →</a>
-      </aside>
+      <section class='recent-board' aria-labelledby='recent-title'>
+        <header class='board-head'>
+          <div>
+            <span class='mono-label'>Recently edited</span>
+            <span class='edition'>READING QUEUE</span>
+          </div>
+          <a href='/docs'>全部 →</a>
+        </header>
+
+        <h2 id='recent-title' class='editorial-title'>最近整理</h2>
+        <ol class='recent-list'>
+          {
+            recentNotes.map((note, index) => (
+              <li>
+                <a href={`/docs/${note.id}`}>
+                  <span class='recent-index'>{String(index + 1).padStart(2, '0')}</span>
+                  <span class='recent-copy'>
+                    <strong>{note.data.title}</strong>
+                    <small>{getSectionTitle(note)}</small>
+                  </span>
+                  <time datetime={(note.data.updatedDate ?? note.data.publishDate)?.toISOString()}>
+                    {formatDate(note.data.updatedDate ?? note.data.publishDate)}
+                  </time>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <nav class='entry-grid' aria-label='更多站点栏目'>
+        {
+          entries.map((entry) => (
+            <a href={entry.href}>
+              <span class='entry-code'>{entry.code}</span>
+              <span class='entry-copy'>
+                <strong>{entry.title}</strong>
+                <small>{entry.note}</small>
+              </span>
+              <span class='entry-mark' aria-hidden='true'>
+                {entry.mark}
+              </span>
+            </a>
+          ))
+        }
+      </nav>
     </section>
   </main>
 </PageLayout>
 
 <style>
-  .home-page {
-    padding-bottom: 1rem;
+  .home-dashboard {
+    min-height: calc(100dvh - 10rem);
+    padding: clamp(1rem, 2.8vw, 2.5rem) 0 1rem;
   }
 
-  .home-hero {
+  .home-intro {
     display: grid;
-    grid-template-columns: minmax(0, 1.22fr) minmax(19rem, 0.78fr);
-    gap: clamp(2.5rem, 7vw, 7rem);
-    align-items: center;
-    min-height: min(42rem, calc(100vh - 8rem));
-    padding: 2.5rem 0 5rem;
-  }
-
-  .hero-kicker {
-    margin: 0 0 1.4rem;
-    color: hsl(var(--primary));
-  }
-
-  .hero-copy h1 {
-    max-width: 13ch;
-    margin: 0;
-    font-size: clamp(3.35rem, 7.2vw, 6.9rem);
-    line-height: 0.94;
-  }
-
-  .hero-lead {
-    max-width: 42rem;
-    margin: 2rem 0 0;
-    color: hsl(var(--muted-foreground));
-    font-size: 1.04rem;
-    line-height: 1.9;
-  }
-
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 2rem;
-  }
-
-  .field-sheet {
-    position: relative;
-    min-height: 30rem;
-    padding: 1.4rem;
-    border: 1px solid hsl(var(--foreground));
-    background: hsl(var(--card) / 0.72);
-    box-shadow: 14px 14px 0 hsl(var(--foreground) / 0.08);
-  }
-
-  .field-sheet::before,
-  .field-sheet::after {
-    position: absolute;
-    width: 1rem;
-    height: 1rem;
-    content: '';
-    border-color: hsl(var(--primary));
-  }
-
-  .field-sheet::before {
-    top: -1px;
-    left: -1px;
-    border-top: 3px solid;
-    border-left: 3px solid;
-  }
-
-  .field-sheet::after {
-    right: -1px;
-    bottom: -1px;
-    border-right: 3px solid;
-    border-bottom: 3px solid;
-  }
-
-  .field-sheet-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid hsl(var(--border));
-  }
-
-  .field-sheet-head strong {
-    font-family: var(--display-font);
-    font-size: 2.5rem;
-    font-weight: 400;
-    line-height: 0.8;
-  }
-
-  .solver-map {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.75rem 0.6rem;
-    margin: 2rem 0;
-    color: hsl(var(--muted-foreground));
-    font-family: var(--mono-font);
-    font-size: 0.68rem;
-    letter-spacing: 0.06em;
-  }
-
-  .solver-map i {
-    position: relative;
-    width: 3.5rem;
-    height: 1px;
-    align-self: center;
-    background: hsl(var(--border));
-  }
-
-  .solver-map i::after {
-    position: absolute;
-    top: -2px;
-    right: 0;
-    width: 5px;
-    height: 5px;
-    content: '';
-    border-radius: 50%;
-    background: hsl(var(--primary));
-  }
-
-  .field-sheet-title {
-    padding: 1.4rem 0;
-    border-top: 1px solid hsl(var(--border));
-    border-bottom: 1px solid hsl(var(--border));
-  }
-
-  .field-sheet-title p {
-    margin: 0 0 0.45rem;
-    color: hsl(var(--primary));
-    font-family: var(--mono-font);
-    font-size: 0.67rem;
-    letter-spacing: 0.12em;
-  }
-
-  .field-sheet-title h2 {
-    margin: 0;
-    font-size: 2.05rem;
-    line-height: 1.1;
-  }
-
-  .field-sheet dl {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    margin: 1.4rem 0;
-  }
-
-  .field-sheet dl div + div {
-    border-left: 1px solid hsl(var(--border));
-    padding-left: 0.85rem;
-  }
-
-  .field-sheet dt {
-    color: hsl(var(--muted-foreground));
-    font-size: 0.7rem;
-  }
-
-  .field-sheet dd {
-    margin: 0.3rem 0 0;
-    font-family: var(--mono-font);
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-
-  .field-note {
-    margin: 2rem 0 0;
-    color: hsl(var(--muted-foreground));
-    font-family: var(--mono-font);
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-  }
-
-  .release-strip {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 1.5rem;
-    align-items: center;
-    padding: 1rem 0;
-    border-top: 1px solid hsl(var(--foreground));
+    grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: end;
+    padding-bottom: clamp(1.5rem, 3vw, 2.4rem);
     border-bottom: 1px solid hsl(var(--foreground));
   }
 
-  .release-strip p {
+  .intro-title .mono-label {
+    margin: 0 0 0.8rem;
+    color: hsl(var(--primary));
+  }
+
+  .intro-title h1 {
+    max-width: 20ch;
+    margin: 0;
+    font-size: clamp(2.35rem, 4.5vw, 4.9rem);
+    line-height: 0.99;
+    text-wrap: balance;
+  }
+
+  .intro-note > p {
     margin: 0;
     color: hsl(var(--muted-foreground));
     font-size: 0.9rem;
+    line-height: 1.75;
   }
 
-  .release-strip strong {
-    color: hsl(var(--foreground));
-  }
-
-  .release-strip a {
-    font-size: 0.82rem;
-    font-weight: 600;
-  }
-
-  .chapters-section {
-    padding: 7rem 0 3rem;
-  }
-
-  .section-heading {
-    display: grid;
-    grid-template-columns: 1fr minmax(18rem, 0.68fr);
-    gap: 3rem;
-    align-items: end;
-    margin-bottom: 2.5rem;
-  }
-
-  .section-heading h2,
-  .panel-title h2 {
-    margin: 0.4rem 0 0;
-    font-size: clamp(2.2rem, 4vw, 4rem);
-    line-height: 1;
-  }
-
-  .section-heading > p {
-    margin: 0;
+  .intro-note > span {
+    display: flex;
+    gap: 0.55rem;
+    align-items: center;
+    margin-top: 1rem;
     color: hsl(var(--muted-foreground));
-    line-height: 1.8;
+    font-family: var(--mono-font);
+    font-size: 0.59rem;
+    letter-spacing: 0.09em;
   }
 
-  .chapter-grid {
+  .intro-note i {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--accent-cool);
+    box-shadow: 0 0 0 4px hsl(var(--muted) / 0.85);
+  }
+
+  .workbench-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(20rem, 0.7fr);
+    gap: 1px;
+    margin-top: 1px;
+    border: 1px solid hsl(var(--foreground));
+    background: hsl(var(--foreground));
+  }
+
+  .focus-board,
+  .recent-board,
+  .entry-grid {
+    min-width: 0;
+    background: hsl(var(--background));
+  }
+
+  .focus-board,
+  .recent-board {
+    min-height: 23.5rem;
+    padding: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .board-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .board-head > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    align-items: center;
+  }
+
+  .board-head .mono-label {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.6rem;
+  }
+
+  .edition,
+  .board-head > strong,
+  .board-head > a {
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+  }
+
+  .edition {
+    padding: 0.16rem 0.35rem;
+    color: hsl(var(--primary));
+    background: hsl(var(--muted));
+  }
+
+  .board-head > strong {
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .focus-copy {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 1.5rem;
+    align-items: end;
+    padding: 1.45rem 0 1.25rem;
+  }
+
+  .focus-copy > p:first-child {
+    grid-column: 1 / -1;
+    margin: 0 0 0.35rem;
+    color: hsl(var(--primary));
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .focus-copy h2 {
+    margin: 0;
+    font-size: clamp(2.2rem, 4vw, 4.2rem);
+    line-height: 0.95;
+  }
+
+  .focus-copy > p:last-of-type {
+    max-width: 38rem;
+    margin: 0.75rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.8rem;
+    line-height: 1.65;
+  }
+
+  .focus-copy .note-button {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    align-self: end;
+    white-space: nowrap;
+  }
+
+  .route-map {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     margin: 0;
     padding: 0;
-    border-top: 1px solid hsl(var(--border));
+    border-top: 1px solid hsl(var(--foreground));
     border-left: 1px solid hsl(var(--border));
     list-style: none;
   }
 
-  .chapter-grid li {
+  .route-map li {
     min-width: 0;
     border-right: 1px solid hsl(var(--border));
     border-bottom: 1px solid hsl(var(--border));
   }
 
-  .chapter-grid a {
-    position: relative;
-    display: block;
-    min-height: 15.5rem;
-    padding: 1.25rem;
-    color: hsl(var(--foreground));
-    background: hsl(var(--card) / 0.26);
-  }
-
-  .chapter-grid a:hover {
-    color: hsl(var(--foreground));
-    background: hsl(var(--card));
-  }
-
-  .chapter-topline {
-    display: flex;
-    justify-content: space-between;
-    color: hsl(var(--muted-foreground));
-    font-family: var(--mono-font);
-    font-size: 0.65rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .chapter-topline span:first-child {
-    color: hsl(var(--primary));
-  }
-
-  .chapter-grid h3 {
-    margin: 3.5rem 0 0.85rem;
-    font-family: var(--display-font);
-    font-size: 1.55rem;
-    font-weight: 500;
-  }
-
-  .chapter-grid p {
-    max-width: 22rem;
-    margin: 0;
-    color: hsl(var(--muted-foreground));
-    font-size: 0.85rem;
-    line-height: 1.7;
-  }
-
-  .chapter-arrow {
-    position: absolute;
-    right: 1.25rem;
-    bottom: 1.1rem;
-    color: hsl(var(--primary));
-    font-family: var(--mono-font);
-  }
-
-  .home-lower-grid {
+  .route-map a {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
-    gap: 1px;
-    margin-top: 5rem;
-    border: 1px solid hsl(var(--foreground));
-    background: hsl(var(--foreground));
+    grid-template-columns: auto 1fr auto;
+    gap: 0.55rem;
+    align-items: center;
+    min-height: 3.15rem;
+    padding: 0.6rem 0.65rem;
+    color: hsl(var(--foreground));
+    background: hsl(var(--card) / 0.25);
   }
 
-  .recent-panel,
-  .cv-panel {
-    background: hsl(var(--background));
+  .route-map a:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--muted) / 0.75);
   }
 
-  .recent-panel {
-    padding: 1.6rem;
+  .route-map span,
+  .route-map small {
+    font-family: var(--mono-font);
+    font-size: 0.57rem;
   }
 
-  .panel-title {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid hsl(var(--border));
+  .route-map span {
+    color: hsl(var(--primary));
   }
 
-  .panel-title h2 {
-    font-size: 2.5rem;
+  .route-map small {
+    color: hsl(var(--muted-foreground));
   }
 
-  .panel-title > a {
-    font-size: 0.8rem;
+  .route-map strong {
+    overflow: hidden;
+    font-size: 0.74rem;
     font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .recent-board h2 {
+    margin: 1.3rem 0 0.6rem;
+    font-size: 2rem;
+    line-height: 1;
   }
 
   .recent-list {
@@ -495,25 +382,40 @@ const getSectionTitle = (note: CollectionEntry<'docs'>) =>
     list-style: none;
   }
 
+  .recent-list li + li {
+    border-top: 1px solid hsl(var(--border));
+  }
+
   .recent-list a {
     display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 1rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.65rem;
     align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid hsl(var(--border));
+    min-height: 3.5rem;
     color: hsl(var(--foreground));
   }
 
   .recent-list a:hover {
-    padding-left: 0.35rem;
+    padding-left: 0.25rem;
     color: hsl(var(--foreground));
   }
 
-  .recent-number {
-    color: hsl(var(--primary));
+  .recent-index,
+  .recent-list time {
     font-family: var(--mono-font);
-    font-size: 0.67rem;
+    font-size: 0.56rem;
+  }
+
+  .recent-index {
+    color: hsl(var(--primary));
+  }
+
+  .recent-list time {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .recent-copy {
+    min-width: 0;
   }
 
   .recent-copy strong,
@@ -522,109 +424,128 @@ const getSectionTitle = (note: CollectionEntry<'docs'>) =>
   }
 
   .recent-copy strong {
-    font-size: 0.93rem;
+    overflow: hidden;
+    font-size: 0.78rem;
     font-weight: 600;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .recent-copy small {
-    margin-top: 0.25rem;
+    margin-top: 0.16rem;
     color: hsl(var(--muted-foreground));
-    font-size: 0.68rem;
+    font-size: 0.58rem;
   }
 
-  .cv-panel {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    min-height: 32rem;
-    overflow: hidden;
-    padding: 1.6rem;
+  .entry-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1px;
+    background: hsl(var(--foreground));
   }
 
-  .cv-monogram {
-    position: absolute;
-    top: 1.4rem;
-    right: -0.5rem;
-    color: hsl(var(--muted) / 0.7);
+  .entry-grid > a {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.65rem;
+    align-items: center;
+    min-height: 5.4rem;
+    padding: 0.8rem;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+
+  .entry-grid > a:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--muted));
+  }
+
+  .entry-code,
+  .entry-mark {
+    color: hsl(var(--primary));
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+  }
+
+  .entry-copy {
+    min-width: 0;
+  }
+
+  .entry-copy strong,
+  .entry-copy small {
+    display: block;
+  }
+
+  .entry-copy strong {
     font-family: var(--display-font);
-    font-size: 10rem;
-    line-height: 0.8;
+    font-size: 1.05rem;
+    font-weight: 500;
   }
 
-  .cv-panel h2 {
-    position: relative;
-    margin: 0 0 1rem;
-    font-size: 2.3rem;
-    line-height: 1.05;
-  }
-
-  .cv-panel > p:not(.mono-label) {
-    position: relative;
-    margin: 0;
+  .entry-copy small {
+    margin-top: 0.18rem;
+    overflow: hidden;
     color: hsl(var(--muted-foreground));
-    font-size: 0.88rem;
-    line-height: 1.75;
+    font-size: 0.58rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .cv-panel > a {
-    position: relative;
-    margin-top: 1.4rem;
-    font-size: 0.82rem;
-    font-weight: 600;
+  @media (max-width: 1100px) {
+    .entry-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
-  @media (max-width: 960px) {
-    .home-hero {
+  @media (max-width: 900px) {
+    .home-intro,
+    .workbench-grid {
       grid-template-columns: 1fr;
+    }
+
+    .home-intro {
+      gap: 1.25rem;
+    }
+
+    .focus-board,
+    .recent-board {
       min-height: 0;
     }
 
-    .field-sheet {
-      min-height: 25rem;
-    }
-
-    .chapter-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .home-lower-grid {
-      grid-template-columns: 1fr;
+    .entry-grid {
+      grid-column: auto;
     }
   }
 
-  @media (max-width: 680px) {
-    .home-hero {
-      gap: 3rem;
-      padding-top: 2rem;
+  @media (max-width: 620px) {
+    .home-dashboard {
+      padding-top: 0.5rem;
     }
 
-    .hero-copy h1 {
-      font-size: clamp(3rem, 14vw, 4.6rem);
+    .intro-title h1 {
+      font-size: clamp(2.35rem, 11vw, 3.7rem);
     }
 
-    .release-strip,
-    .section-heading {
-      grid-template-columns: 1fr;
-      gap: 0.85rem;
+    .focus-copy {
+      display: block;
     }
 
-    .chapters-section {
-      padding-top: 5rem;
+    .focus-copy .note-button {
+      margin-top: 1rem;
     }
 
-    .chapter-grid {
-      grid-template-columns: 1fr;
+    .route-map {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .chapter-grid a {
-      min-height: 13.5rem;
+    .entry-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .panel-title {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 0.75rem;
+    .entry-grid > a {
+      min-height: 5rem;
     }
   }
 </style>
