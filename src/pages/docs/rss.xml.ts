@@ -1,6 +1,6 @@
 import type { AstroGlobal, ImageMetadata } from 'astro'
 import { getImage } from 'astro:assets'
-import type { CollectionEntry } from 'astro:content'
+import { getCollection, type CollectionEntry } from 'astro:content'
 import rss from '@astrojs/rss'
 import type { Root } from 'mdast'
 import rehypeStringify from 'rehype-stringify'
@@ -8,8 +8,6 @@ import remarkParse from 'remark-parse'
 import remarkRehype from 'remark-rehype'
 import { unified } from 'unified'
 import { visit } from 'unist-util-visit'
-
-import { getBlogCollection, sortMDByDate } from 'astro-pure/server'
 import config from 'virtual:config'
 
 // Get dynamic import of images as a map collection
@@ -54,7 +52,13 @@ const renderContent = async (post: CollectionEntry<'docs'>, site: URL) => {
 }
 
 const GET = async (context: AstroGlobal) => {
-  const allPostsByDate = sortMDByDate(await getBlogCollection('docs')) as CollectionEntry<'docs'>[]
+  const allPostsByDate = (
+    (await getCollection('docs', ({ data }) => !data.draft)) as CollectionEntry<'docs'>[]
+  ).sort(
+    (a, b) =>
+      (b.data.updatedDate?.valueOf() ?? b.data.publishDate?.valueOf() ?? 0) -
+      (a.data.updatedDate?.valueOf() ?? a.data.publishDate?.valueOf() ?? 0)
+  )
   const siteUrl = context.site ?? new URL(import.meta.env.SITE)
 
   return rss({
@@ -69,9 +73,12 @@ const GET = async (context: AstroGlobal) => {
     site: import.meta.env.SITE,
     items: await Promise.all(
       allPostsByDate.map(async (post) => ({
+        title: post.data.title,
+        description: post.data.description,
         link: `/docs/${post.id}`,
         content: await renderContent(post, siteUrl),
-        ...post.data
+        pubDate: post.data.updatedDate ?? post.data.publishDate,
+        categories: post.data.tags
       }))
     )
   })

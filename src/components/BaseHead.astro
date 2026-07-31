@@ -1,9 +1,8 @@
 ---
-import { Font } from 'astro:assets'
+import config from 'virtual:config'
 
 import { prod } from 'astro-pure/server'
 import type { SiteMeta } from 'astro-pure/types'
-import config from 'virtual:config'
 
 type Props = SiteMeta
 
@@ -15,25 +14,19 @@ const socialImageURL = new URL(ogImage ? ogImage : config.socialCard, Astro.url)
 ---
 
 <meta charset='utf-8' />
-<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover' name='viewport' />
+<meta
+  content='width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover'
+  name='viewport'
+/>
 <meta content='IE=edge' http-equiv='X-UA-Compatible' />
 <title>{siteTitle}</title>
 
 {/* Icons / Favicon */}
 <link rel='icon' type={config.favicon.type} href={config.favicon.href} />
-<link rel='shortcut icon' type={config.favicon.type} href={config.favicon.href} />
 <link rel='icon' type='image/png' sizes='32x32' href='/favicon/favicon-32x32.png' />
 <link rel='icon' type='image/png' sizes='16x16' href='/favicon/favicon-16x16.png' />
 <link rel='apple-touch-icon' sizes='180x180' href='/favicon/apple-touch-icon.png' />
 <link rel='manifest' href='/favicon/site.webmanifest' />
-
-{/* Font preloads */}
-<Font cssVariable='--font-satoshi' preload={[{ subset: 'latin', style: 'normal' }]} />
-<style>
-  body {
-    font-family: var(--font-satoshi);
-  }
-</style>
 
 {/* Canonical URL */}
 <link rel='canonical' href={canonicalURL} />
@@ -44,7 +37,7 @@ const socialImageURL = new URL(ogImage ? ogImage : config.socialCard, Astro.url)
 <meta content={config.author} name='author' />
 
 {/* Theme Color */}
-{/* <meta content='' name='theme-color' /> */}
+<meta content='#f4efe5' name='theme-color' />
 <meta name='color-scheme' content='light dark' />
 
 {/* Open Graph / Facebook */}
@@ -55,8 +48,8 @@ const socialImageURL = new URL(ogImage ? ogImage : config.socialCard, Astro.url)
 <meta content={config.title} property='og:site_name' />
 <meta content={config.locale.attrs} property='og:locale' />
 <meta content={socialImageURL} property='og:image' />
-<meta content='1200' property='og:image:width' />
-<meta content='630' property='og:image:height' />
+<meta content='512' property='og:image:width' />
+<meta content='512' property='og:image:height' />
 {
   articleDate && (
     <>
@@ -67,7 +60,7 @@ const socialImageURL = new URL(ogImage ? ogImage : config.socialCard, Astro.url)
 }
 
 {/* Twitter */}
-<meta content='summary_large_image' property='twitter:card' />
+<meta content='summary' property='twitter:card' />
 <meta content={canonicalURL} property='twitter:url' />
 <meta content={title} property='twitter:title' />
 <meta content={description} property='twitter:description' />
@@ -80,19 +73,10 @@ const socialImageURL = new URL(ogImage ? ogImage : config.socialCard, Astro.url)
 <link
   rel='alternate'
   type='application/rss+xml'
-  title={config.title}
-  href={`${Astro.site}rss.xml`}
+  title={`${config.title} 笔记`}
+  href={new URL('/docs/rss.xml', Astro.site)}
 />
 
 <meta content={Astro.generator} name='generator' />
 
-{
-  /* User script*/
-  prod && (
-    <script>
-      console.log( '%c Atmoos %c https://atmoos.vercel.app/',
-      'color:#fff;background:linear-gradient(90deg,#448bff,#44e9ff);padding:5px 0;',
-      'color:#000;background:linear-gradient(90deg,#44e9ff,#ffffff);padding:5px 10px 5px 0px;' )
-    </script>
-  )
-}
+{prod && <meta name='application-name' content='Atmoos' />}

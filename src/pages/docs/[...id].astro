@@ -1,96 +1,342 @@
 ---
-import { type CollectionEntry, render } from 'astro:content'
+import type { CollectionEntry } from 'astro:content'
+import { getCollection, render } from 'astro:content'
+import { getSectionMeta, getSeriesMeta } from '@/data/docs'
 
 import { MediumZoom } from 'astro-pure/advanced'
 import { TOC } from 'astro-pure/components/pages'
-import { getBlogCollection, sortMDByDate } from 'astro-pure/server'
-import { Button } from 'astro-pure/user'
 import PageLayout from '@/layouts/ContentLayout.astro'
-
 import DocsContents from '@/components/docs/DocsContents.astro'
 
 export const prerender = true
 
 export async function getStaticPaths() {
-  const posts = sortMDByDate(await getBlogCollection('docs'))
+  const posts = await getCollection('docs', ({ data }) => !data.draft)
   return posts.map((post) => ({
     params: { id: post.id },
     props: { post }
   }))
 }
 
-type Props = {
+interface Props {
   post: CollectionEntry<'docs'>
 }
 
-const { post } = Astro.props
+const { post } = Astro.props as Props
 const { Content, headings } = await render(post)
-const { description, title } = post.data
+const { data } = post
+const series = getSeriesMeta(data.series)
+const section = getSectionMeta(data.series, data.section)
 
-const categoryLabels: Record<string, string> = {
-  setup: '建站与配置',
-  integrations: '功能组件',
-  advanced: '维护优化'
-}
-const pathParts = post.id.split('/')
-const category = pathParts[0] ?? 'notes'
-const categoryTitle = categoryLabels[category] ?? category
+const allDocs = (await getCollection(
+  'docs',
+  ({ data }) => !data.draft && data.series === post.data.series
+)) as CollectionEntry<'docs'>[]
+const orderedDocs = allDocs.sort(
+  (a, b) =>
+    a.data.sectionOrder - b.data.sectionOrder ||
+    a.data.order - b.data.order ||
+    a.data.title.localeCompare(b.data.title)
+)
+const currentIndex = orderedDocs.findIndex((note) => note.id === post.id)
+const previous = currentIndex > 0 ? orderedDocs[currentIndex - 1] : undefined
+const next = currentIndex >= 0 ? orderedDocs[currentIndex + 1] : undefined
+
+const formatDate = (date?: Date) =>
+  date
+    ? new Intl.DateTimeFormat('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date)
+    : undefined
+
+const noteCode = [
+  series?.number ?? '00',
+  section?.number ?? '00',
+  String(data.order).padStart(2, '0')
+].join(' / ')
 ---
 
-<PageLayout meta={{ description, title }} back='/docs'>
+<PageLayout
+  meta={{
+    articleDate: data.updatedDate?.toISOString() ?? data.publishDate?.toISOString(),
+    description: data.description,
+    title: data.title
+  }}
+  highlightColor={series?.color}
+  back='/docs'
+>
   <Fragment slot='sidebar'>
-    {!!headings.length && <TOC {headings} />}
-    <DocsContents class='docs-toc mt-4 block' />
+    {
+      headings.length > 0 && (
+        <div class='article-toc'>
+          <p class='mono-label'>On this page</p>
+          <TOC {headings} />
+        </div>
+      )
+    }
+    <DocsContents
+      class='section-toc'
+      title={false}
+      compact
+      series={data.series}
+      section={data.section}
+    />
   </Fragment>
 
   <Fragment slot='header'>
-    <div class='mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
-      <a href='/docs' class='hover:text-foreground'>笔记库</a>
+    <div class='doc-breadcrumbs'>
+      <a href='/docs'>笔记</a>
       <span>/</span>
-      <span>{categoryTitle}</span>
+      {series && <span>{series.shortTitle}</span>}
+      {
+        section && (
+          <>
+            <>
+              <span>/</span>
+              <span>{section.title}</span>
+            </>
+          </>
+        )
+      }
     </div>
-    <h1 class='text-2xl font-medium sm:mb-2 sm:text-3xl'>
-      {title}
-    </h1>
+
+    <div class='doc-code mono-label'>{noteCode}</div>
+    <h1 class='editorial-title doc-title'>{data.title}</h1>
     {
-      description && (
-        <blockquote class='mt-4 text-sm italic leading-7 text-muted-foreground'>
-          <q>{description}</q>
-        </blockquote>
+      data.description && data.description !== data.title && (
+        <p class='doc-deck'>{data.description}</p>
+      )
+    }
+
+    <dl class='doc-meta'>
+      <div>
+        <dt>状态</dt>
+        <dd>{data.maturity === 'stable' ? '相对稳定' : '持续整理'}</dd>
+      </div>
+      <div>
+        <dt>来源</dt>
+        <dd>{data.source ?? '个人笔记'}</dd>
+      </div>
+      <div>
+        <dt>创建</dt>
+        <dd>{formatDate(data.publishDate) ?? '未记录'}</dd>
+      </div>
+      <div>
+        <dt>公开整理</dt>
+        <dd>{formatDate(data.updatedDate) ?? '未记录'}</dd>
+      </div>
+    </dl>
+
+    {
+      data.series === 'timefold' && (
+        <aside class='version-note'>
+          <strong>版本提示</strong>
+          <span>
+            本组笔记来自持续更新的学习记录，部分示例基于文中标注的 1.x / 2.x 版本；写代码前请对照
+            <a href='https://docs.timefold.ai/timefold-solver/latest/'>官方当前文档</a>。
+          </span>
+        </aside>
       )
     }
   </Fragment>
 
   <Content />
 
-  <div slot='bottom' class='flex flex-col gap-y-4'>
-    <div class='rounded-lg border px-4 py-3 text-sm leading-7 text-muted-foreground'>
-      当前路径：{['笔记库', categoryTitle, title].join(' / ')}
-    </div>
-    <Button title='回到笔记库' href='/docs' class='w-fit px-3 py-2' style='font-size:1rem' />
-    <div class='rounded-lg border px-4 py-3 sm:py-4 md:mt-2'>
-      <DocsContents />
-    </div>
-  </div>
+  <nav slot='bottom' class='article-pagination' aria-label='相邻笔记'>
+    {
+      previous ? (
+        <a class='previous' href={`/docs/${previous.id}`}>
+          <span class='mono-label'>Previous</span>
+          <strong>{previous.data.title}</strong>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      next ? (
+        <a class='next' href={`/docs/${next.id}`}>
+          <span class='mono-label'>Next</span>
+          <strong>{next.data.title}</strong>
+        </a>
+      ) : (
+        <a class='next' href='/docs'>
+          <span class='mono-label'>Index</span>
+          <strong>返回完整目录</strong>
+        </a>
+      )
+    }
+  </nav>
 </PageLayout>
+
 <MediumZoom />
 
 <style>
-  @media (min-width: 1300px) {
-    :global(
-      main, .bottom { transform: translateX(7.9rem); }
-      #sidebar { overflow: inherit; }
-      toc-heading { height: 100%; display: flex; flex-direction: column; }
-      toc-heading > ul { overflow-y: scroll; }
-    )
-    .docs-toc {
-      position: fixed;
-      top: 0;
-      left: -64rem;
-      margin-top: 0;
-      max-height: calc(100vh - 7rem);
-      overflow-y: scroll;
-      padding-right: 1rem !important;
+  .doc-breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 2.2rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+  }
+
+  .doc-breadcrumbs a {
+    color: hsl(var(--foreground));
+  }
+
+  .doc-code {
+    margin-bottom: 1rem;
+    color: hsl(var(--primary));
+  }
+
+  .doc-title {
+    max-width: 17ch;
+    margin: 0;
+    font-size: clamp(3rem, 6vw, 5.8rem);
+    line-height: 0.98;
+    overflow-wrap: anywhere;
+  }
+
+  .doc-deck {
+    max-width: 48rem;
+    margin: 1.6rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  .doc-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 2.2rem 0 0;
+    padding: 1rem 0;
+    border-top: 1px solid hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .doc-meta div + div {
+    padding-left: 1rem;
+    border-left: 1px solid hsl(var(--border));
+  }
+
+  .doc-meta dt {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.65rem;
+  }
+
+  .doc-meta dd {
+    overflow: hidden;
+    margin: 0.3rem 0 0;
+    font-family: var(--mono-font);
+    font-size: 0.7rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .version-note {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 0.9rem 1rem;
+    border-left: 3px solid hsl(var(--primary));
+    background: hsl(var(--muted) / 0.5);
+    color: hsl(var(--muted-foreground));
+    font-size: 0.76rem;
+    line-height: 1.65;
+  }
+
+  .version-note strong {
+    color: hsl(var(--foreground));
+  }
+
+  .version-note a {
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-underline-offset: 0.2rem;
+  }
+
+  .article-toc {
+    margin-bottom: 1.6rem;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .article-toc > p {
+    margin: 0 0 0.75rem;
+    color: hsl(var(--primary));
+  }
+
+  .section-toc {
+    display: block;
+  }
+
+  .article-pagination {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    border: 1px solid hsl(var(--foreground));
+    background: hsl(var(--foreground));
+  }
+
+  .article-pagination a {
+    display: flex;
+    min-height: 7rem;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem 1.2rem;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+
+  .article-pagination a:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--muted));
+  }
+
+  .article-pagination .next {
+    text-align: right;
+  }
+
+  .article-pagination .mono-label {
+    margin-bottom: 0.45rem;
+    color: hsl(var(--primary));
+  }
+
+  .article-pagination strong {
+    font-family: var(--display-font);
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  @media (max-width: 640px) {
+    .doc-title {
+      max-width: 100%;
+      font-size: clamp(2.35rem, 11.5vw, 3.5rem);
+    }
+
+    .doc-meta {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem 0;
+    }
+
+    .doc-meta div:nth-child(3) {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .version-note {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+
+    .article-pagination {
+      grid-template-columns: 1fr;
     }
   }
 </style>

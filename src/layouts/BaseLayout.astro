@@ -1,12 +1,12 @@
 ---
-import { Footer, Header, ThemeProvider } from 'astro-pure/components/basic'
-import type { SiteMeta } from 'astro-pure/types'
-import BaseHead from '@/components/BaseHead.astro'
-import config from '@/site-config'
 import Analytics from '@vercel/analytics/astro'
 
-// Import the global.css file here so that it is included on
-// all pages through the use of the <BaseLayout /> component.
+import { ThemeProvider } from 'astro-pure/components/basic'
+import type { SiteMeta } from 'astro-pure/types'
+import { Icon } from 'astro-pure/user'
+import BaseHead from '@/components/BaseHead.astro'
+import config from '@/site-config'
+
 import '@/assets/styles/global.css'
 import '@/assets/styles/app.css'
 
@@ -20,6 +20,11 @@ const {
   highlightColor,
   ...props
 } = Astro.props
+
+const pathname = Astro.url.pathname
+const menu = config.header.menu ?? []
+const isActive = (link: string) =>
+  link === '/' ? pathname === '/' : pathname === link || pathname.startsWith(`${link}/`)
 ---
 
 <html lang={config.locale.lang}>
@@ -28,67 +33,117 @@ const {
     <ThemeProvider />
   </head>
 
-  <body class='flex justify-center bg-background text-foreground' {...props}>
+  <body class='site-body bg-background text-foreground' {...props}>
+    <div class='site-grid' aria-hidden='true'></div>
     {
       highlightColor && (
-        <div
-          id='highlight-gradient'
-          class='pointer-events-none absolute start-0 top-0 z-0 h-screen w-full opacity-25'
-          style={`background-image:linear-gradient(${highlightColor},transparent)`}
-        />
+        <div class='site-highlight' style={`--page-accent:${highlightColor}`} aria-hidden='true' />
       )
     }
+
     <div
       id='main-container'
-      class='w-full max-w-[70rem] min-h-[100dvh] flex flex-col justify-between'
+      class='relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[80rem] flex-col'
     >
-      <Header />
-      <div class='flex-1 w-full'>
+      <header class='site-header'>
+        <a class='site-brand' href='/' aria-label='Atmoos 首页'>
+          <span class='site-brand-mark'>A</span>
+          <span>
+            <strong>ATMOOS</strong>
+            <small>AMI’S WORKING NOTES</small>
+          </span>
+        </a>
+
+        <nav class='site-nav' aria-label='主导航'>
+          {
+            menu.map((item) => (
+              <a class:list={[{ active: isActive(item.link) }]} href={item.link}>
+                {item.title}
+              </a>
+            ))
+          }
+        </nav>
+
+        <div class='site-actions'>
+          <a class='site-icon-button' href='/search' aria-label='搜索笔记' title='搜索'>
+            <Icon name='search' class='size-5' />
+          </a>
+          <button
+            class='site-icon-button'
+            id='theme-toggle'
+            type='button'
+            aria-label='切换明暗主题'
+          >
+            <Icon name='sun' class='theme-light size-5' />
+            <Icon name='moon' class='theme-dark size-5' />
+          </button>
+          <details class='site-menu'>
+            <summary class='site-icon-button' aria-label='打开导航'>
+              <Icon name='menu' class='size-5' />
+            </summary>
+            <nav aria-label='移动端导航'>
+              {
+                menu.map((item) => (
+                  <a class:list={[{ active: isActive(item.link) }]} href={item.link}>
+                    {item.title}
+                  </a>
+                ))
+              }
+            </nav>
+          </details>
+        </div>
+      </header>
+
+      <div class='w-full flex-1'>
         <slot />
       </div>
-      <Footer />
+
+      <footer class='site-footer'>
+        <div>
+          <span>© {new Date().getFullYear()} Ami</span>
+          <span class='site-footer-note'>从真实笔记中整理，持续修订。</span>
+        </div>
+        <div class='site-footer-links'>
+          <a href='https://github.com/ATmoos985' rel='me'>GitHub</a>
+          <a href='/docs/rss.xml'>RSS</a>
+        </div>
+      </footer>
     </div>
 
     <Analytics />
 
-    {/* Set highlight color */}
-    <style define:vars={{ highlightColor }}>
-      :global(.highlight) {
-        --highlight-fg: color-mix(
-          in srgb,
-          var(--highlightColor) 40%,
-          hsl(var(--foreground)/var(--un-text-opacity, 1))
-        );
-        color: var(--highlight-fg, hsl(var(--primary) / var(--un-text-opacity))) !important;
-      }
-      :global(.highlight-bg) {
-        background-color: var(
-          --highlightColor,
-          hsl(var(--primary) / var(--un-text-opacity))
-        ) !important;
-      }
-
-      /* Extend safe area for some special screens
-       * https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env
-       * https://webkit.org/blog/7929/designing-websites-for-iphone-x/
-       */
-      #main-container {
-        padding-top: env(safe-area-inset-top);
-        padding-left: calc(1rem + env(safe-area-inset-left));
-        padding-right: calc(1rem + env(safe-area-inset-right));
-      }
-      @media (min-width: 640px) {
-        #main-container {
-          padding-left: calc(1.75rem + env(safe-area-inset-left));
-          padding-right: calc(1.75rem + env(safe-area-inset-right));
-        }
-      }
-      @media (min-width: 1024px) {
-        #main-container {
-          padding-left: calc(2.5rem + env(safe-area-inset-left));
-          padding-right: calc(2.5rem + env(safe-area-inset-right));
-        }
-      }
-    </style>
+    <script is:inline>
+      document.getElementById('theme-toggle')?.addEventListener('click', () => {
+        const root = document.documentElement
+        const nextTheme = root.classList.contains('dark') ? 'light' : 'dark'
+        root.classList.toggle('dark', nextTheme === 'dark')
+        localStorage.setItem('theme', nextTheme)
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute('content', nextTheme === 'dark' ? '#14191b' : '#f4efe5')
+      })
+    </script>
   </body>
 </html>
+
+<style>
+  #main-container {
+    padding-top: env(safe-area-inset-top);
+    padding-left: calc(1rem + env(safe-area-inset-left));
+    padding-right: calc(1rem + env(safe-area-inset-right));
+  }
+
+  @media (min-width: 640px) {
+    #main-container {
+      padding-left: calc(1.75rem + env(safe-area-inset-left));
+      padding-right: calc(1.75rem + env(safe-area-inset-right));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #main-container {
+      padding-left: calc(2.5rem + env(safe-area-inset-left));
+      padding-right: calc(2.5rem + env(safe-area-inset-right));
+    }
+  }
+</style>

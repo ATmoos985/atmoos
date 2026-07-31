@@ -1,7 +1,7 @@
 ---
 import { BackToTop } from 'astro-pure/components/pages'
 import type { SiteMeta } from 'astro-pure/types'
-import { Button, Icon } from 'astro-pure/user'
+import { Icon } from 'astro-pure/user'
 import { cn } from 'astro-pure/utils'
 import PageLayout from '@/layouts/BaseLayout.astro'
 import { integ } from '@/site-config'
@@ -16,58 +16,46 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
 ---
 
 <PageLayout {meta} {highlightColor} {...props}>
-  <Button title='返回' href={back} variant='back' />
-  <main class='mt-6 items-start gap-x-10 md:flex'>
-    {/* Sidebar */}
-    <aside
-      class='animate top-20 min-w-48 basis-60 overflow-y-scroll max-md:hidden z-40 fixed md:sticky md:order-2 lg:shrink-0 max-md:border max-md:px-4 max-md:py-3 max-md:bg-muted max-md:rounded-xl'
-      style='height:calc(100vh - 7rem);'
-      id='sidebar'
-    >
-      <slot name='sidebar' />
-    </aside>
-    <div
-      id='sidebar-shade'
-      class='fixed top-0 start-0 w-full h-full'
-      style='display:none;background-color:#00000091;z-index:31'
-    >
-    </div>
+  <div class='content-layout'>
+    <a class='content-back mono-label' href={back}>← 返回笔记目录</a>
 
-    <article class='min-w-0 grow'>
-      {/* Content header */}
-      <div id='content-header' class='animate'>
-        <slot name='header' />
-      </div>
+    <main class='content-grid'>
+      <article class='content-article'>
+        <header id='content-header' class='animate'>
+          <slot name='header' />
+        </header>
 
-      {/* Content */}
-      <div
-        id='content'
-        class={cn(
-          'max-w-none animate mt-8 md:min-w-[45ch] overflow-x-hidden',
-          integ.typography.class
-        )}
-      >
-        <slot />
-      </div>
-    </article>
-  </main>
+        <div
+          id='content'
+          class={cn('article-prose animate prose text-base max-w-none', integ.typography.class)}
+        >
+          <slot />
+        </div>
 
-  <div class='bottom mt-6 items-start gap-x-10 md:flex'>
-    {/* Bottom */}
-    <div class='flex-1 text-muted-foreground md:min-w-[50ch]'>
-      <slot name='bottom' />
-    </div>
-    <div class='min-w-48 basis-60'>
-      <slot name='bottom-sidebar' />
-    </div>
+        <footer class='article-bottom'>
+          <slot name='bottom' />
+        </footer>
+      </article>
+
+      <aside id='sidebar' class='content-sidebar animate'>
+        <div class='sidebar-inner'>
+          <slot name='sidebar' />
+        </div>
+      </aside>
+    </main>
+
+    <div id='sidebar-shade' aria-hidden='true'></div>
   </div>
 
   <BackToTop header='content-header' content='content'>
     <button
       slot='other-icons'
-      aria-label='Toggle sidebar'
-      class='size-10 flex items-center justify-center rounded-full border-2 border-transparent bg-muted text-muted-foreground duration-300 hover:border-border/75 md:hidden sm:size-12'
+      aria-controls='sidebar'
+      aria-expanded='false'
+      aria-label='打开文章目录'
+      class='sidebar-button'
       id='sidebar-btn'
+      type='button'
     >
       <Icon name='list' />
     </button>
@@ -75,81 +63,165 @@ const { meta, highlightColor, back = '/', ...props } = Astro.props
 </PageLayout>
 
 <script>
-  // Toggle sidebar visibility on button click
   const sidebarButton = document.getElementById('sidebar-btn')
   const sidebar = document.getElementById('sidebar')
-  const sidebarShade = document.getElementById('sidebar-shade') as HTMLElement
+  const sidebarShade = document.getElementById('sidebar-shade')
+  const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-  if (sidebarShade) {
-    sidebarShade.addEventListener('click', () => {
-      toggleSidebar()
-    })
-  }
+  const sidebarIsOpen = () => sidebar?.classList.contains('show') ?? false
 
-  function toggleSidebar() {
-    if (sidebar && sidebar.classList.contains('show')) {
-      sidebar.classList.remove('show')
-      sidebarShade.style.display = 'none'
-    } else if (sidebar) {
-      sidebar.classList.add('show')
-      sidebarShade.style.display = 'block'
+  const setSidebar = (isOpen: boolean, restoreFocus = true) => {
+    const wasOpen = sidebarIsOpen()
+    sidebar?.classList.toggle('show', isOpen)
+    sidebarShade?.classList.toggle('show', isOpen)
+    document.body.classList.toggle('sidebar-open', isOpen)
+    sidebarButton?.setAttribute('aria-expanded', String(isOpen))
+
+    if (isOpen) {
+      sidebar?.setAttribute('role', 'dialog')
+      sidebar?.setAttribute('aria-modal', 'true')
+      sidebar?.setAttribute('aria-label', '文章目录')
+      requestAnimationFrame(() => sidebar?.querySelector<HTMLElement>(focusableSelector)?.focus())
+      return
     }
+
+    sidebar?.removeAttribute('role')
+    sidebar?.removeAttribute('aria-modal')
+    sidebar?.removeAttribute('aria-label')
+    if (wasOpen && restoreFocus) sidebarButton?.focus()
   }
 
-  sidebarButton?.addEventListener('click', () => {
-    toggleSidebar()
+  sidebarButton?.addEventListener('click', () => setSidebar(!sidebarIsOpen()))
+  sidebarShade?.addEventListener('click', () => setSidebar(false))
+  sidebar?.addEventListener('click', (event) => {
+    const target = event.target
+    if (target instanceof Element && target.closest('a[href]')) setSidebar(false, false)
+  })
+
+  document.addEventListener('keydown', (event) => {
+    if (!sidebarIsOpen()) return
+
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      setSidebar(false)
+      return
+    }
+
+    if (event.key !== 'Tab' || !sidebar) return
+    const focusable = [...sidebar.querySelectorAll<HTMLElement>(focusableSelector)]
+    if (!focusable.length) return
+
+    const first = focusable[0]
+    const last = focusable.at(-1)
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last?.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  })
+
+  window.matchMedia('(min-width: 801px)').addEventListener('change', ({ matches }) => {
+    if (matches) setSidebar(false, false)
   })
 </script>
+
 <style>
-  @media (min-width: 769px) {
-    #sidebar-shade {
-      display: none !important;
-    }
+  .content-layout {
+    padding-top: 0.5rem;
   }
-  @media (max-width: 769px) {
-    aside.show {
-      display: block !important;
-      opacity: 1;
+
+  .content-back {
+    display: inline-flex;
+    margin-bottom: 2rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 17rem);
+    gap: clamp(2.5rem, 6vw, 5.5rem);
+    align-items: start;
+  }
+
+  .content-article {
+    min-width: 0;
+  }
+
+  .content-sidebar {
+    position: sticky;
+    top: 6.2rem;
+    max-height: calc(100vh - 7.5rem);
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  .sidebar-inner {
+    padding-bottom: 2rem;
+  }
+
+  .article-prose {
+    margin-top: 3rem;
+    overflow-x: hidden;
+  }
+
+  .article-bottom {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid hsl(var(--foreground));
+  }
+
+  #sidebar-shade {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+    background: hsl(var(--foreground) / 0.5);
+    backdrop-filter: blur(3px);
+  }
+
+  .sidebar-button {
+    display: none;
+    width: 3rem;
+    height: 3rem;
+    place-items: center;
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+
+  :global(body.sidebar-open) {
+    overflow: hidden;
+  }
+
+  @media (max-width: 800px) {
+    .content-grid {
+      display: block;
     }
 
-    @keyframes fade-in-side {
-      0% {
-        transform: translateX(50%);
-        opacity: 0;
-      }
-      100% {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-    @keyframes fade-in {
-      0% {
-        opacity: 0;
-      }
-      100% {
-        opacity: 1;
-      }
-    }
-    aside {
-      animation: 300ms fade-in-side !important;
-      animation-fill-mode: forwards;
+    .content-sidebar {
+      position: fixed;
+      top: 0;
       right: 0;
-      top: 0 !important;
-      height: 100vh !important;
-      min-width: 40vw !important;
-      max-width: 75vw !important;
-      border-top-right-radius: 0 !important;
-      border-bottom-right-radius: 0 !important;
-      padding-top: 1.5rem !important;
-      padding-bottom: 1.5rem !important;
+      z-index: 70;
+      display: none;
+      width: min(88vw, 23rem);
+      max-height: 100dvh;
+      height: 100dvh;
+      padding: 2rem 1.25rem;
+      border-left: 1px solid hsl(var(--border));
+      background: hsl(var(--background));
+      box-shadow: -12px 0 30px hsl(var(--foreground) / 0.14);
     }
-    #sidebar-shade {
-      animation: 300ms fade-in;
+
+    .content-sidebar.show,
+    #sidebar-shade.show {
+      display: block;
     }
-  }
-  @media (max-width: 640px) {
-    aside {
-      min-width: 55vw !important;
+
+    .sidebar-button {
+      display: grid;
     }
   }
 </style>

@@ -9,18 +9,15 @@ function removeDupsAndLowerCase(array: string[]) {
   return Array.from(distinctItems)
 }
 
-// Define blog collection
+// Keep the collection contract expected by astro-pure, while the public blog
+// stays empty until there is real material to publish.
 const blog = defineCollection({
-  // Load Markdown and MDX files in the `src/content/blog/` directory.
   loader: glob({ base: './src/content/blog', pattern: '**/*.{md,mdx}' }),
-  // Required
   schema: ({ image }) =>
     z.object({
-      // Required
-      title: z.string().max(60),
-      description: z.string().max(160),
+      title: z.string().max(100),
+      description: z.string().max(240),
       publishDate: z.coerce.date(),
-      // Optional
       updatedDate: z.coerce.date().optional(),
       heroImage: z
         .object({
@@ -29,15 +26,13 @@ const blog = defineCollection({
           inferSize: z.boolean().optional(),
           width: z.number().optional(),
           height: z.number().optional(),
-
           color: z.string().optional()
         })
         .optional(),
       tags: z.array(z.string()).default([]).transform(removeDupsAndLowerCase),
       language: z.string().optional(),
       draft: z.boolean().default(false),
-      // Special fields
-      comment: z.boolean().default(true)
+      comment: z.boolean().default(false)
     })
 })
 
@@ -46,14 +41,19 @@ const docs = defineCollection({
   loader: glob({ base: './src/content/docs', pattern: '**/*.{md,mdx}' }),
   schema: () =>
     z.object({
-      title: z.string().max(60),
-      description: z.string().max(160),
+      title: z.string().max(100),
+      description: z.string().max(240),
       publishDate: z.coerce.date().optional(),
       updatedDate: z.coerce.date().optional(),
       tags: z.array(z.string()).default([]).transform(removeDupsAndLowerCase),
       draft: z.boolean().default(false),
-      // Special fields
-      order: z.number().default(999)
+      order: z.number().default(999),
+      series: z.string().optional(),
+      section: z.string().optional(),
+      sectionOrder: z.number().default(999),
+      isIndex: z.boolean().default(false),
+      source: z.string().optional(),
+      maturity: z.enum(['working', 'stable']).default('working')
     })
 })
 

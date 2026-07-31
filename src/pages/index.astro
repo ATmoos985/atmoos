@@ -1,193 +1,630 @@
 ---
 import type { CollectionEntry } from 'astro:content'
-import { Image } from 'astro:assets'
+import { getCollection } from 'astro:content'
+import { docsSeries } from '@/data/docs'
 
-import { PostPreview } from 'astro-pure/components/pages'
-import { getBlogCollection, sortMDByDate } from 'astro-pure/server'
-import { Button, Icon, Label } from 'astro-pure/user'
 import PageLayout from '@/layouts/BaseLayout.astro'
-import config from '@/site-config'
 
-const MAX_THOUGHTS = 5
-const MAX_NOTES = 6
+const series = docsSeries[0]
+const docs = (await getCollection('docs', ({ data }) => !data.draft)) as CollectionEntry<'docs'>[]
+const seriesDocs = docs.filter((note) => note.data.series === series.id)
+const articles = seriesDocs.filter((note) => !note.data.isIndex)
+const overview = seriesDocs.find((note) => note.data.isIndex && !note.data.section)
 
-const thoughts = sortMDByDate(await getBlogCollection()).slice(0, MAX_THOUGHTS)
-const notes = (await getBlogCollection('docs')) as CollectionEntry<'docs'>[]
+const sections = series.sections.map((section) => {
+  const notes = seriesDocs
+    .filter((note) => note.data.section === section.id && !note.data.isIndex)
+    .sort((a, b) => a.data.order - b.data.order)
+  const index = seriesDocs.find((note) => note.data.section === section.id && note.data.isIndex)
+  return { ...section, notes, index, first: notes[0] }
+})
 
-const noteMeta: Record<string, { title: string; summary: string; accent: string }> = {
-  setup: {
-    title: '建站与配置',
-    summary: '站点搭建、内容写作和发布流程。',
-    accent: 'border-sky-400'
-  },
-  integrations: {
-    title: '功能组件',
-    summary: '评论、搜索、展示组件和交互增强。',
-    accent: 'border-emerald-400'
-  },
-  advanced: {
-    title: '维护优化',
-    summary: '性能、主题、升级和长期维护。',
-    accent: 'border-rose-400'
-  }
-}
-const noteOrder = Object.keys(noteMeta)
-
-const getNoteTime = (note: CollectionEntry<'docs'>) =>
-  new Date(note.data.updatedDate ?? note.data.publishDate ?? 0).valueOf()
-
-const recentNotes = [...notes]
-  .sort((a, b) => getNoteTime(b) - getNoteTime(a) || a.data.order - b.data.order)
-  .slice(0, MAX_NOTES)
-
-const noteGroups = notes.reduce<Record<string, CollectionEntry<'docs'>[]>>((acc, note) => {
-  const group = note.id.split('/')[0] ?? 'misc'
-  acc[group] ??= []
-  acc[group].push(note)
-  return acc
-}, {})
-
-const noteCategories = Object.entries(noteGroups)
-  .map(([id, items]) => ({
-    id,
-    items: items.sort((a, b) => a.data.order - b.data.order),
-    ...(noteMeta[id] ?? {
-      title: id,
-      summary: '持续整理中的笔记分组。',
-      accent: 'border-muted-foreground'
-    })
-  }))
-  .sort((a, b) => {
-    const aOrder = noteOrder.includes(a.id) ? noteOrder.indexOf(a.id) : 999
-    const bOrder = noteOrder.includes(b.id) ? noteOrder.indexOf(b.id) : 999
-    return aOrder - bOrder || a.title.localeCompare(b.title)
-  })
-
-const imagePath = config.logo.src
-const images = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/*.{jpeg,jpg,png,gif,avif,webp}'
-)
-if (!images[imagePath])
-  throw new Error(
-    `"${imagePath}" does not exist in glob: "src/assets/*.{jpeg,jpg,png,gif,avif,webp}"`
+const recentNotes = [...articles]
+  .sort(
+    (a, b) =>
+      (b.data.updatedDate?.valueOf() ?? 0) - (a.data.updatedDate?.valueOf() ?? 0) ||
+      a.data.sectionOrder - b.data.sectionOrder ||
+      a.data.order - b.data.order
   )
+  .slice(0, 6)
+
+const getSectionTitle = (note: CollectionEntry<'docs'>) =>
+  series.sections.find((section) => section.id === note.data.section)?.title ?? '教程'
 ---
 
-<PageLayout meta={{ title: '首页' }} highlightColor='#4F8F8A'>
-  <main class='flex w-full flex-col items-center'>
-    <section
-      class='animate grid w-full items-center gap-8 py-10 md:grid-cols-[0.95fr_1.05fr] md:py-14'
-      id='content-header'
-    >
-      <div class='flex flex-col gap-y-6'>
-        <div class='flex flex-wrap gap-2'>
-          <Label title='杂想' />
-          <Label title='知识库' />
-          <Label title='长期记录' />
-        </div>
-        <div class='max-w-2xl'>
-          <p class='mb-3 text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground'>
-            Atmoos Notebook
-          </p>
-          <h1 class='text-4xl font-medium leading-tight sm:text-5xl'>
-            把零散想法留下来，把有用知识整理成树。
-          </h1>
-          <p class='mt-5 max-w-xl text-base leading-8 text-muted-foreground'>
-            这里会同时保留两种记录：杂想是按时间流动的片段，笔记库是按主题沉淀的结构。
-          </p>
-        </div>
-        <div class='flex flex-wrap gap-3'>
-          <Button title='进入笔记库' href='/docs' variant='ahead' />
-          <Button title='查看杂想' href='/blog' />
+<PageLayout
+  meta={{
+    title: '首页',
+    description: 'Ami 的公开技术笔记，当前聚焦组合优化、生产排程与 Timefold Solver。'
+  }}
+  highlightColor={series.color}
+>
+  <main class='home-page'>
+    <section class='home-hero animate' id='content-header'>
+      <div class='hero-copy'>
+        <p class='mono-label hero-kicker'>Optimization / Scheduling / Solver</p>
+        <h1 class='editorial-title'>把求解器经验，<br />整理成能复查的方法。</h1>
+        <p class='hero-lead'>
+          这里是 Ami 的公开技术笔记。当前先整理生产排程、组合优化和 Timefold Solver， 内容从
+          Obsidian 笔记中筛选、脱敏，再变成适合网页阅读的知识树。
+        </p>
+        <div class='hero-actions'>
+          <a class='note-button' href={overview ? `/docs/${overview.id}` : '/docs'}>
+            从 Timefold 开始 <span aria-hidden='true'>→</span>
+          </a>
+          <a class='note-button secondary' href='/docs'>浏览全部笔记</a>
         </div>
       </div>
 
-      <div class='justify-self-center md:justify-self-end'>
-        <div class='relative grid size-52 place-items-center rounded-full border bg-muted/50 sm:size-64'>
-          <div class='absolute inset-6 rounded-full border border-dashed border-muted-foreground/35'></div>
-          <Image
-            src={images[imagePath]()}
-            alt={config.logo.alt || 'Profile'}
-            class='size-32 rounded-full border bg-background object-cover p-1 shadow-sm sm:size-40'
-            loading='eager'
-            fetchpriority='high'
-          />
+      <aside class='field-sheet' aria-label='首批公开笔记概况'>
+        <div class='field-sheet-head'>
+          <span class='mono-label'>Public notebook</span>
+          <strong>01</strong>
         </div>
-      </div>
+        <div class='solver-map' aria-hidden='true'>
+          <span>业务问题</span>
+          <i></i>
+          <span>领域模型</span>
+          <i></i>
+          <span>约束评分</span>
+          <i></i>
+          <span>搜索与验证</span>
+        </div>
+        <div class='field-sheet-title'>
+          <p>TIMEFOLD SOLVER</p>
+          <h2 class='editorial-title'>从“能跑”到“可信”</h2>
+        </div>
+        <dl>
+          <div><dt>章节</dt><dd>{series.sections.length}</dd></div>
+          <div><dt>正文</dt><dd>{articles.length}</dd></div>
+          <div><dt>状态</dt><dd>持续整理</dd></div>
+        </dl>
+        <p class='field-note'>OBSIDIAN → PUBLIC REVIEW → WEB</p>
+      </aside>
     </section>
 
-    <div id='content' class='animate flex w-full flex-col gap-y-12 md:w-5/6'>
-      <section class='grid gap-4 md:grid-cols-3'>
+    <section class='release-strip animate' id='content'>
+      <span class='mono-label'>Release 2026.07</span>
+      <p>
+        首批公开 <strong>{seriesDocs.length}</strong> 篇索引与笔记；工作项目回链没有进入公开站点。
+      </p>
+      <a href='/about'>查看整理边界 →</a>
+    </section>
+
+    <section class='chapters-section'>
+      <div class='section-heading'>
+        <div>
+          <p class='mono-label'>Notebook structure</p>
+          <h2 class='editorial-title'>六章，而不是一堆标签。</h2>
+        </div>
+        <p>学习路径按真实求解流程排列：先运行，再建模和写约束，最后用算法、实验与调优验证结果。</p>
+      </div>
+
+      <ol class='chapter-grid'>
         {
-          noteCategories.map((category) => (
-            <a
-              href={`/docs/${category.items[0]?.id ?? ''}`}
-              class={`rounded-lg border-l-4 bg-muted/35 px-5 py-4 transition-colors hover:bg-muted ${category.accent}`}
-            >
-              <p class='text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground'>
-                {category.items.length} notes
-              </p>
-              <h2 class='mt-2 text-lg font-medium'>{category.title}</h2>
-              <p class='mt-2 text-sm leading-6 text-muted-foreground'>{category.summary}</p>
-            </a>
+          sections.map((section) => (
+            <li>
+              <a
+                href={
+                  section.index
+                    ? `/docs/${section.index.id}`
+                    : section.first
+                      ? `/docs/${section.first.id}`
+                      : '/docs'
+                }
+              >
+                <div class='chapter-topline'>
+                  <span>{section.number}</span>
+                  <span>{section.notes.length.toString().padStart(2, '0')} notes</span>
+                </div>
+                <h3>{section.title}</h3>
+                <p>{section.summary}</p>
+                <span class='chapter-arrow' aria-hidden='true'>
+                  ↗
+                </span>
+              </a>
+            </li>
           ))
         }
-      </section>
+      </ol>
+    </section>
 
-      <section class='grid gap-8 lg:grid-cols-[1.1fr_0.9fr]'>
-        <div class='flex min-w-0 flex-col gap-y-4'>
-          <div class='flex items-end justify-between gap-4'>
-            <div>
-              <h2 class='text-2xl font-medium'>最近杂想</h2>
-              <p class='mt-1 text-sm text-muted-foreground'>按时间记录的想法、文章和片段。</p>
-            </div>
-            <Button title='全部' href='/blog' />
+    <section class='home-lower-grid'>
+      <div class='recent-panel'>
+        <div class='panel-title'>
+          <div>
+            <p class='mono-label'>Reading queue</p>
+            <h2 class='editorial-title'>从这些笔记进入</h2>
           </div>
+          <a href='/docs'>完整目录 →</a>
+        </div>
+        <ol class='recent-list'>
           {
-            thoughts.length > 0 ? (
-              <ul class='flex flex-col gap-y-3'>
-                {thoughts.map((post) => (
-                  <PostPreview post={post} />
-                ))}
-              </ul>
-            ) : (
-              <p class='rounded-lg border px-4 py-3 text-muted-foreground'>暂无杂想。</p>
-            )
+            recentNotes.map((note, index) => (
+              <li>
+                <a href={`/docs/${note.id}`}>
+                  <span class='recent-number'>{String(index + 1).padStart(2, '0')}</span>
+                  <span class='recent-copy'>
+                    <strong>{note.data.title}</strong>
+                    <small>{getSectionTitle(note)}</small>
+                  </span>
+                  <span aria-hidden='true'>→</span>
+                </a>
+              </li>
+            ))
           }
-        </div>
+        </ol>
+      </div>
 
-        <div class='flex min-w-0 flex-col gap-y-4'>
-          <div class='flex items-end justify-between gap-4'>
-            <div>
-              <h2 class='text-2xl font-medium'>最近更新的笔记</h2>
-              <p class='mt-1 text-sm text-muted-foreground'>从树形笔记库里抽出的最新条目。</p>
-            </div>
-            <Button title='目录' href='/docs' />
-          </div>
-          <ol class='flex flex-col gap-y-2'>
-            {
-              recentNotes.map((note) => (
-                <li>
-                  <a
-                    href={`/docs/${note.id}`}
-                    class='group flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-muted/40'
-                  >
-                    <span class='mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground group-hover:text-foreground'>
-                      <Icon name='document' class='size-4' />
-                    </span>
-                    <span class='min-w-0'>
-                      <span class='block font-medium'>{note.data.title}</span>
-                      <span class='mt-1 block line-clamp-2 text-sm leading-6 text-muted-foreground'>
-                        {note.data.description}
-                      </span>
-                    </span>
-                  </a>
-                </li>
-              ))
-            }
-          </ol>
-        </div>
-      </section>
-    </div>
+      <aside class='cv-panel'>
+        <p class='mono-label'>Profile / reserved</p>
+        <span class='cv-monogram'>CV</span>
+        <h2 class='editorial-title'>经历留白，先不拿模板凑数。</h2>
+        <p>CV 已预留结构。经历、教育与项目会在核对公开范围后补入；现在只展示已经发布的真实内容。</p>
+        <a href='/cv'>查看 CV 占位页 →</a>
+      </aside>
+    </section>
   </main>
 </PageLayout>
+
+<style>
+  .home-page {
+    padding-bottom: 1rem;
+  }
+
+  .home-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.22fr) minmax(19rem, 0.78fr);
+    gap: clamp(2.5rem, 7vw, 7rem);
+    align-items: center;
+    min-height: min(42rem, calc(100vh - 8rem));
+    padding: 2.5rem 0 5rem;
+  }
+
+  .hero-kicker {
+    margin: 0 0 1.4rem;
+    color: hsl(var(--primary));
+  }
+
+  .hero-copy h1 {
+    max-width: 13ch;
+    margin: 0;
+    font-size: clamp(3.35rem, 7.2vw, 6.9rem);
+    line-height: 0.94;
+  }
+
+  .hero-lead {
+    max-width: 42rem;
+    margin: 2rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 1.04rem;
+    line-height: 1.9;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .field-sheet {
+    position: relative;
+    min-height: 30rem;
+    padding: 1.4rem;
+    border: 1px solid hsl(var(--foreground));
+    background: hsl(var(--card) / 0.72);
+    box-shadow: 14px 14px 0 hsl(var(--foreground) / 0.08);
+  }
+
+  .field-sheet::before,
+  .field-sheet::after {
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    content: '';
+    border-color: hsl(var(--primary));
+  }
+
+  .field-sheet::before {
+    top: -1px;
+    left: -1px;
+    border-top: 3px solid;
+    border-left: 3px solid;
+  }
+
+  .field-sheet::after {
+    right: -1px;
+    bottom: -1px;
+    border-right: 3px solid;
+    border-bottom: 3px solid;
+  }
+
+  .field-sheet-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .field-sheet-head strong {
+    font-family: var(--display-font);
+    font-size: 2.5rem;
+    font-weight: 400;
+    line-height: 0.8;
+  }
+
+  .solver-map {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem 0.6rem;
+    margin: 2rem 0;
+    color: hsl(var(--muted-foreground));
+    font-family: var(--mono-font);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+  }
+
+  .solver-map i {
+    position: relative;
+    width: 3.5rem;
+    height: 1px;
+    align-self: center;
+    background: hsl(var(--border));
+  }
+
+  .solver-map i::after {
+    position: absolute;
+    top: -2px;
+    right: 0;
+    width: 5px;
+    height: 5px;
+    content: '';
+    border-radius: 50%;
+    background: hsl(var(--primary));
+  }
+
+  .field-sheet-title {
+    padding: 1.4rem 0;
+    border-top: 1px solid hsl(var(--border));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .field-sheet-title p {
+    margin: 0 0 0.45rem;
+    color: hsl(var(--primary));
+    font-family: var(--mono-font);
+    font-size: 0.67rem;
+    letter-spacing: 0.12em;
+  }
+
+  .field-sheet-title h2 {
+    margin: 0;
+    font-size: 2.05rem;
+    line-height: 1.1;
+  }
+
+  .field-sheet dl {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 1.4rem 0;
+  }
+
+  .field-sheet dl div + div {
+    border-left: 1px solid hsl(var(--border));
+    padding-left: 0.85rem;
+  }
+
+  .field-sheet dt {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.7rem;
+  }
+
+  .field-sheet dd {
+    margin: 0.3rem 0 0;
+    font-family: var(--mono-font);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .field-note {
+    margin: 2rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+
+  .release-strip {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--foreground));
+  }
+
+  .release-strip p {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.9rem;
+  }
+
+  .release-strip strong {
+    color: hsl(var(--foreground));
+  }
+
+  .release-strip a {
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .chapters-section {
+    padding: 7rem 0 3rem;
+  }
+
+  .section-heading {
+    display: grid;
+    grid-template-columns: 1fr minmax(18rem, 0.68fr);
+    gap: 3rem;
+    align-items: end;
+    margin-bottom: 2.5rem;
+  }
+
+  .section-heading h2,
+  .panel-title h2 {
+    margin: 0.4rem 0 0;
+    font-size: clamp(2.2rem, 4vw, 4rem);
+    line-height: 1;
+  }
+
+  .section-heading > p {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.8;
+  }
+
+  .chapter-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid hsl(var(--border));
+    border-left: 1px solid hsl(var(--border));
+    list-style: none;
+  }
+
+  .chapter-grid li {
+    min-width: 0;
+    border-right: 1px solid hsl(var(--border));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .chapter-grid a {
+    position: relative;
+    display: block;
+    min-height: 15.5rem;
+    padding: 1.25rem;
+    color: hsl(var(--foreground));
+    background: hsl(var(--card) / 0.26);
+  }
+
+  .chapter-grid a:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--card));
+  }
+
+  .chapter-topline {
+    display: flex;
+    justify-content: space-between;
+    color: hsl(var(--muted-foreground));
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .chapter-topline span:first-child {
+    color: hsl(var(--primary));
+  }
+
+  .chapter-grid h3 {
+    margin: 3.5rem 0 0.85rem;
+    font-family: var(--display-font);
+    font-size: 1.55rem;
+    font-weight: 500;
+  }
+
+  .chapter-grid p {
+    max-width: 22rem;
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  .chapter-arrow {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1.1rem;
+    color: hsl(var(--primary));
+    font-family: var(--mono-font);
+  }
+
+  .home-lower-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+    gap: 1px;
+    margin-top: 5rem;
+    border: 1px solid hsl(var(--foreground));
+    background: hsl(var(--foreground));
+  }
+
+  .recent-panel,
+  .cv-panel {
+    background: hsl(var(--background));
+  }
+
+  .recent-panel {
+    padding: 1.6rem;
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .panel-title h2 {
+    font-size: 2.5rem;
+  }
+
+  .panel-title > a {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .recent-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .recent-list a {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+
+  .recent-list a:hover {
+    padding-left: 0.35rem;
+    color: hsl(var(--foreground));
+  }
+
+  .recent-number {
+    color: hsl(var(--primary));
+    font-family: var(--mono-font);
+    font-size: 0.67rem;
+  }
+
+  .recent-copy strong,
+  .recent-copy small {
+    display: block;
+  }
+
+  .recent-copy strong {
+    font-size: 0.93rem;
+    font-weight: 600;
+  }
+
+  .recent-copy small {
+    margin-top: 0.25rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.68rem;
+  }
+
+  .cv-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 32rem;
+    overflow: hidden;
+    padding: 1.6rem;
+  }
+
+  .cv-monogram {
+    position: absolute;
+    top: 1.4rem;
+    right: -0.5rem;
+    color: hsl(var(--muted) / 0.7);
+    font-family: var(--display-font);
+    font-size: 10rem;
+    line-height: 0.8;
+  }
+
+  .cv-panel h2 {
+    position: relative;
+    margin: 0 0 1rem;
+    font-size: 2.3rem;
+    line-height: 1.05;
+  }
+
+  .cv-panel > p:not(.mono-label) {
+    position: relative;
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.88rem;
+    line-height: 1.75;
+  }
+
+  .cv-panel > a {
+    position: relative;
+    margin-top: 1.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  @media (max-width: 960px) {
+    .home-hero {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+
+    .field-sheet {
+      min-height: 25rem;
+    }
+
+    .chapter-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .home-lower-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .home-hero {
+      gap: 3rem;
+      padding-top: 2rem;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(3rem, 14vw, 4.6rem);
+    }
+
+    .release-strip,
+    .section-heading {
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+
+    .chapters-section {
+      padding-top: 5rem;
+    }
+
+    .chapter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .chapter-grid a {
+      min-height: 13.5rem;
+    }
+
+    .panel-title {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+</style>
