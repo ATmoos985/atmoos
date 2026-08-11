@@ -141,10 +141,10 @@ span.katex-display {
 }
 
 .article-prose.prose h2 {
-  margin-top: 4.5rem;
-  padding-top: 1.1rem;
+  margin-top: 3.2rem;
+  padding-top: 0.8rem;
   border-top: 1px solid hsl(var(--foreground));
-  font-size: 2.15rem;
+  font-size: 1.8rem;
   line-height: 1.2;
 }
 
@@ -159,8 +159,8 @@ span.katex-display {
 }
 
 .article-prose.prose h3 {
-  margin-top: 2.6rem;
-  font-size: 1.55rem;
+  margin-top: 2rem;
+  font-size: 1.35rem;
 }
 
 .article-prose.prose h4 {

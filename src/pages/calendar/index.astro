@@ -1,0 +1,118 @@
+---
+import { getCollection } from 'astro:content'
+import { buildActivityItems } from '@/data/activity'
+
+import PageLayout from '@/layouts/BaseLayout.astro'
+import ActivityCalendar from '@/components/ActivityCalendar.astro'
+
+const [docs, essays] = await Promise.all([
+  getCollection('docs', ({ data }) => !data.draft),
+  getCollection('blog', ({ data }) => !data.draft)
+])
+
+const activity = buildActivityItems(docs, essays)
+const activityDates = new Set(activity.flatMap((item) => item.events.map((event) => event.date)))
+---
+
+<PageLayout
+  meta={{
+    title: '日历',
+    description: '按日期查看 Ami 的公开笔记与随笔发布、更新记录。'
+  }}
+  highlightColor='#d65a34'
+>
+  <main class='calendar-page'>
+    <header class='calendar-hero animate' id='content-header'>
+      <div>
+        <p class='mono-label'>Global activity / 003</p>
+        <h1 class='editorial-title'>哪一天，<br />记录发生了什么。</h1>
+      </div>
+      <div class='calendar-intro'>
+        <p>
+          这是全站的公开活动入口。圆点代表当天有笔记或随笔发布、更新，点击日期后可以直接进入当天涉及的内容。
+        </p>
+        <dl>
+          <div><dt>活动项</dt><dd>{activity.length}</dd></div>
+          <div><dt>有记录日期</dt><dd>{activityDates.size}</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <ActivityCalendar {activity} />
+  </main>
+</PageLayout>
+
+<style>
+  .calendar-page {
+    padding: 1rem 0 1rem;
+  }
+
+  .calendar-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(19rem, 0.7fr);
+    gap: clamp(3rem, 8vw, 8rem);
+    align-items: end;
+    padding: 1.75rem 0 2.5rem;
+    border-bottom: 1px solid hsl(var(--foreground));
+  }
+
+  .calendar-hero .mono-label {
+    margin: 0 0 1.2rem;
+    color: hsl(var(--primary));
+  }
+
+  .calendar-hero h1 {
+    max-width: 14ch;
+    margin: 0;
+    font-size: clamp(2.2rem, 3.6vw, 3.6rem);
+    line-height: 1;
+  }
+
+  .calendar-intro > p {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.7;
+  }
+
+  .calendar-intro dl {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    margin: 1.25rem 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .calendar-intro dl div + div {
+    padding-left: 1rem;
+    border-left: 1px solid hsl(var(--border));
+  }
+
+  .calendar-intro dt {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.7rem;
+  }
+
+  .calendar-intro dd {
+    margin: 0.2rem 0 0;
+    font-family: var(--mono-font);
+    font-size: 1rem;
+  }
+
+  .calendar-page :global(.calendar-panel) {
+    margin-top: 2rem;
+    border-top: 1px solid hsl(var(--foreground));
+  }
+
+  @media (max-width: 900px) {
+    .calendar-hero {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .calendar-hero h1 {
+      font-size: clamp(2.35rem, 10vw, 3.2rem);
+    }
+  }
+</style>

@@ -3,7 +3,7 @@ import type { Config, IntegrationUserConfig, ThemeUserConfig } from 'astro-pure/
 export const theme: ThemeUserConfig = {
   title: 'Atmoos',
   author: 'Ami',
-  description: 'Ami 的公开技术笔记：组合优化、生产排程与求解器工程。',
+  description: 'Ami 的个人入口：CV、公开笔记、随笔与持续更新记录。',
   favicon: '/favicon/favicon-32x32.png',
   socialCard: '/favicon/android-chrome-512x512.png',
   locale: {
@@ -31,6 +31,8 @@ export const theme: ThemeUserConfig = {
     menu: [
       { title: '首页', link: '/' },
       { title: '笔记', link: '/docs' },
+      { title: '随笔', link: '/essays' },
+      { title: '日历', link: '/calendar' },
       { title: '专题', link: '/topics' },
       { title: '项目', link: '/projects' },
       { title: '近况', link: '/now' },

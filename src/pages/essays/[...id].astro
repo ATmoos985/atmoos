@@ -1,0 +1,187 @@
+---
+import { getCollection, render } from 'astro:content'
+
+import PageLayout from '@/layouts/BaseLayout.astro'
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  const essays = await getCollection('blog', ({ data }) => !data.draft)
+  return essays.map((essay) => ({
+    params: { id: essay.id },
+    props: { essay }
+  }))
+}
+
+const { essay } = Astro.props
+const { Content } = await render(essay)
+const { data } = essay
+
+const formatDate = (date?: Date) =>
+  date
+    ? new Intl.DateTimeFormat('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date)
+    : '未记录'
+---
+
+<PageLayout
+  meta={{
+    articleDate: data.updatedDate?.toISOString() ?? data.publishDate.toISOString(),
+    description: data.description,
+    title: data.title
+  }}
+  highlightColor='#2f7771'
+>
+  <main class='essay-page'>
+    <header class='essay-header animate' id='content-header'>
+      <div class='essay-breadcrumbs'>
+        <a href='/essays'>随笔</a>
+        <span>/</span>
+        <span>Personal writing</span>
+      </div>
+      <p class='mono-label essay-code'>WRITING / 002</p>
+      <h1 class='editorial-title'>{data.title}</h1>
+      <p class='essay-deck'>{data.description}</p>
+      <dl class='essay-meta'>
+        <div><dt>发布</dt><dd>{formatDate(data.publishDate)}</dd></div>
+        <div><dt>更新</dt><dd>{formatDate(data.updatedDate)}</dd></div>
+        <div><dt>类型</dt><dd>随笔</dd></div>
+      </dl>
+    </header>
+
+    <article id='content' class='article-prose prose text-base max-w-none animate'>
+      <Content />
+    </article>
+
+    <footer class='essay-footer'>
+      <a href='/essays'>← 返回随笔区</a>
+      <a href='/'>回到个人首页 →</a>
+    </footer>
+  </main>
+</PageLayout>
+
+<style>
+  .essay-page {
+    padding: 2rem 0 1rem;
+  }
+
+  .essay-header {
+    max-width: 58rem;
+    padding: 1.75rem 0 2.25rem;
+    border-bottom: 1px solid hsl(var(--foreground));
+  }
+
+  .essay-breadcrumbs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.4rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+  }
+
+  .essay-breadcrumbs a {
+    color: hsl(var(--foreground));
+  }
+
+  .essay-code {
+    margin: 0 0 1rem;
+    color: var(--accent-cool);
+  }
+
+  .essay-header h1 {
+    max-width: 16ch;
+    margin: 0;
+    font-size: clamp(2.2rem, 3.8vw, 3.8rem);
+    line-height: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .essay-deck {
+    max-width: 45rem;
+    margin: 1.15rem 0 0;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.75;
+  }
+
+  .essay-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 1.5rem 0 0;
+    padding: 1rem 0;
+    border-top: 1px solid hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .essay-meta div + div {
+    padding-left: 1rem;
+    border-left: 1px solid hsl(var(--border));
+  }
+
+  .essay-meta dt {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.65rem;
+  }
+
+  .essay-meta dd {
+    margin: 0.3rem 0 0;
+    font-family: var(--mono-font);
+    font-size: 0.7rem;
+  }
+
+  .essay-page > article {
+    max-width: 48rem;
+    margin-top: 3rem;
+  }
+
+  .essay-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 48rem;
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid hsl(var(--foreground));
+    font-family: var(--mono-font);
+    font-size: 0.68rem;
+  }
+
+  .essay-footer a {
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-decoration-color: hsl(var(--border));
+    text-underline-offset: 0.25rem;
+  }
+
+  .essay-footer a:hover {
+    color: var(--accent-cool);
+    text-decoration-color: var(--accent-cool);
+  }
+
+  @media (max-width: 620px) {
+    .essay-header h1 {
+      max-width: 100%;
+      font-size: clamp(2.1rem, 9.5vw, 2.9rem);
+    }
+
+    .essay-meta {
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem 0;
+    }
+
+    .essay-meta div:nth-child(3) {
+      grid-column: 1 / -1;
+      padding-left: 0;
+      border-top: 1px solid hsl(var(--border));
+      border-left: 0;
+      padding-top: 1rem;
+    }
+
+    .essay-footer {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>
