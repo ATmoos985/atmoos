@@ -342,3 +342,37 @@ html.image-preview-open {
     border-radius: 999px;
   }
 }
+
+/* Obsidian notes keep their callouts and examples without a separate theme. */
+.article-prose.prose .note-callout {
+  margin: 1.3rem 0;
+  padding: .9rem 1.1rem;
+  border-left: 2px solid hsl(var(--primary) / .65);
+  background: hsl(var(--muted) / .45);
+  color: hsl(var(--foreground));
+  font-size: .9rem;
+}
+.article-prose.prose .callout-title {
+  margin: 0 0 .55rem;
+  font-weight: 600;
+  font-style: normal;
+}
+.article-prose.prose details.note-callout:not([open]) > summary { margin-bottom: 0; }
+.article-prose.prose .note-callout > :last-child { margin-bottom: 0; }
+.article-prose.prose .note-callout p { margin-block: .6rem; }
+.article-prose.prose .note-callout ul,
+.article-prose.prose .note-callout ol { margin-block: .5rem; }
+.article-prose.prose .note-callout li { margin-block: .25rem; }
+.article-prose.prose .note-callout[data-callout='warning'] { border-left-color: #ad751d; }
+.article-prose.prose .note-callout[data-callout='info'] { border-left-color: #557481; }
+.article-prose.prose details > summary { cursor: pointer; }
+.article-prose.prose .note-example { margin: 1rem 0; padding: .8rem 1rem; border: 1px solid hsl(var(--border)); }
+.article-prose.prose .note-example > summary { font-weight: 600; font-size: .85rem; }
+.article-prose.prose .note-diagram { margin: 1.5rem 0 .5rem; overflow-x: auto; }
+.article-prose.prose .note-diagram svg { width: 100%; height: auto; min-width: 28rem; }
+.article-prose.prose .diagram-source { margin-block: .5rem 1.5rem; font-size: .75rem; }
+.article-prose.prose .diagram-source > summary { color: hsl(var(--muted-foreground)); }
+@media print {
+  .diagram-source { display: none; }
+  .article-prose.prose .note-diagram svg { min-width: 0; }
+}

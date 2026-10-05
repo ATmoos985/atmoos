@@ -42,6 +42,13 @@ const tutorials = defineCollection({
   schema: (context) =>
     articleSchema(context).extend({
       series: z.string().trim().min(1).optional(),
+      course: z
+        .string()
+        .regex(/^[a-z0-9-]+$/)
+        .default('notes'),
+      chapter: z.string().trim().min(1).default('笔记'),
+      chapterOrder: z.number().int().nonnegative().default(0),
+      sourceUpdated: z.coerce.date().optional(),
       order: z.number().int().nonnegative().default(999)
     })
 })

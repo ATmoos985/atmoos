@@ -8,41 +8,62 @@ interface Props {
   sectionUrl: string
   sectionLabel: string
   language?: string
+  tutorial?: boolean
 }
 
-const { meta, sectionUrl, sectionLabel, language = 'zh-CN' } = Astro.props
+const { meta, sectionUrl, sectionLabel, language = 'zh-CN', tutorial = false } = Astro.props
 ---
 
 <PageLayout {meta}>
-  <main id='main-content' class='reading-page'>
-    <a class='reading-back text-link' href={sectionUrl}>← {sectionLabel}</a>
-    <article lang={language}>
-      <header class='article-header'>
-        <slot name='header' />
-      </header>
-      <slot name='contents' />
-      <div class:list={['article-prose prose text-base max-w-none', integ.typography.class]}>
-        <slot />
-      </div>
-    </article>
-    <slot name='adjacent' />
-    <footer class='reading-footer'>
-      <a class='text-link' href={sectionUrl}>← 返回{sectionLabel}</a>
-      <a class='text-link' href='#main-content'>回到顶部 ↑</a>
-    </footer>
-    <p class='reader-status' role='status' aria-live='polite' data-reader-status></p>
-    <dialog class='image-dialog' aria-label='图片预览'>
-      <button type='button' class='image-close'>关闭 ×</button>
-      <div class='image-preview'></div>
-    </dialog>
-  </main>
+  <div class:list={['reader-layout', { 'tutorial-workspace': tutorial }]}>
+    <slot name='navigation' />
+    <main id='main-content' class='reading-page'>
+      <a class='reading-back text-link' href={sectionUrl}>← {sectionLabel}</a>
+      <article lang={language}>
+        <header class='article-header'>
+          <slot name='header' />
+        </header>
+        <slot name='contents' />
+        <div class:list={['article-prose prose text-base max-w-none', integ.typography.class]}>
+          <slot />
+        </div>
+      </article>
+      <slot name='adjacent' />
+      <footer class='reading-footer'>
+        <a class='text-link' href={sectionUrl}>← 返回{sectionLabel}</a>
+        <a class='text-link' href='#main-content'>回到顶部 ↑</a>
+      </footer>
+      <p class='reader-status' role='status' aria-live='polite' data-reader-status></p>
+      <dialog class='image-dialog' aria-label='图片预览'>
+        <button type='button' class='image-close'>关闭 ×</button>
+        <div class='image-preview'></div>
+      </dialog>
+    </main>
+  </div>
 </PageLayout>
 
 <script>
   import '../scripts/reading'
+  import '../scripts/diagrams'
 </script>
 
 <style>
+  .reader-layout {
+    min-width: 0;
+  }
+  .tutorial-workspace {
+    display: grid;
+    grid-template-columns: clamp(9rem, 12vw, 12rem) clamp(12rem, 17vw, 16rem) minmax(0, 1fr);
+    gap: clamp(1.5rem, 2.5vw, 3rem);
+    align-items: start;
+  }
+  .tutorial-workspace .reading-page {
+    max-width: 52rem;
+    padding-top: 2rem;
+  }
+  .tutorial-workspace .article-header {
+    padding-top: 1rem;
+  }
   .reading-page {
     width: 100%;
     max-width: 44rem;
@@ -111,5 +132,19 @@ const { meta, sectionUrl, sectionLabel, language = 'zh-CN' } = Astro.props
     max-width: 100%;
     font-size: 0.8rem;
     overflow-wrap: anywhere;
+  }
+  @media (max-width: 1000px) {
+    .tutorial-workspace {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .tutorial-workspace .reading-page {
+      padding-top: 1.5rem;
+    }
+  }
+  @media print {
+    .tutorial-workspace {
+      display: block;
+    }
   }
 </style>

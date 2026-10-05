@@ -2,9 +2,10 @@
 import { Image } from 'astro:assets'
 import { render } from 'astro:content'
 import { formatDate, tagUrl, type BlogPost } from '@/data/blog'
-import { tutorialTagUrl, type Tutorial } from '@/data/tutorials'
+import { getTutorials, tutorialTagUrl, type Tutorial } from '@/data/tutorials'
 
 import PageLayout from '@/layouts/ContentLayout.astro'
+import TutorialNavigation from '@/components/TutorialNavigation.astro'
 
 import 'katex/dist/katex.min.css'
 
@@ -26,6 +27,8 @@ const sectionUrl = isTutorial ? '/tutorials' : '/blog'
 const sectionLabel = isTutorial ? '教程' : '博客'
 const makeTagUrl = isTutorial ? tutorialTagUrl : tagUrl
 const series = isTutorial ? post.data.series : undefined
+const notes = isTutorial ? await getTutorials() : []
+const sourceUpdated = isTutorial ? post.data.sourceUpdated : undefined
 const contents = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 4)
 ---
 
@@ -39,15 +42,30 @@ const contents = headings.filter((heading) => heading.depth >= 2 && heading.dept
   {sectionUrl}
   {sectionLabel}
   language={data.language}
+  tutorial={isTutorial}
 >
+  <Fragment slot='navigation'>
+    {
+      isTutorial && (
+        <TutorialNavigation {notes} activeCourse={post.data.course} activeId={post.id} />
+      )
+    }
+  </Fragment>
   <Fragment slot='header'>
     {series && <p class='article-series'>{series}</p>}
     <h1 class='editorial-title'>{data.title}</h1>
     {data.description !== data.title && <p class='article-description'>{data.description}</p>}
     <p class='article-dates'>
+      {
+        sourceUpdated && (
+          <span>
+            笔记更新 <time datetime={sourceUpdated.toISOString()}>{formatDate(sourceUpdated)}</time>
+          </span>
+        )
+      }
       <span
-        >发布于 <time datetime={data.publishDate.toISOString()}>{formatDate(data.publishDate)}</time
-        ></span
+        >{isTutorial ? '收录于' : '发布于'}
+        <time datetime={data.publishDate.toISOString()}>{formatDate(data.publishDate)}</time></span
       >
       {
         data.updatedDate && data.updatedDate.valueOf() > data.publishDate.valueOf() && (
@@ -84,7 +102,7 @@ const contents = headings.filter((heading) => heading.depth >= 2 && heading.dept
   <Fragment slot='contents'>
     {
       contents.length > 0 && (
-        <details class='article-contents' open>
+        <details class='article-contents' open={!isTutorial}>
           <summary>文章目录</summary>
           <nav aria-label='文章目录'>
             <ol>

@@ -5,8 +5,8 @@ Ami 的个人网站，使用 [Astro](https://astro.build/) 构建，保留纸张
 右上角导航提供三个内容入口：
 
 - `/`：个人 CV，展示已有的个人资料、关注方向和公开项目。
-- `/blog`：博客时间轴，按 `publishDate` 倒序显示，支持 `?tag=标签` 筛选。
-- `/tutorials`：教程与学习笔记，按系列和章节顺序展示，支持标签筛选。
+- `/blog`：左侧发布日历，右侧博客与散文时间轴，最新文章在上；点击带小点的日期筛选当天文章。
+- `/tutorials`：教程栏目 → 章节目录 → 笔记正文三栏，默认打开数据结构第一篇；窄屏自动折叠两级导航。
 - `/blog/文章路径`：文章正文；`/blog/rss.xml` 提供 RSS 摘要订阅。
 - `/tutorials/笔记路径`：笔记正文；页尾可在同一系列内切换章节。
 
@@ -49,7 +49,9 @@ draft: false
 
 `publishDate` 为发布日期；`updatedDate` 可选，用于正文中的更新日期，不影响时间轴排序。
 日期按上海时区显示。`draft: true` 的文章不会出现在列表、标签、RSS 或正文路由中。
-标签筛选由服务端处理，不依赖浏览器 JavaScript。
+日期（`?date=YYYY-MM-DD`）和标签（`?tag=标签`）可组合筛选，均由服务端处理，不依赖浏览器 JavaScript。
+`?month=YYYY-MM` 只改变日历正在查看的月份，不会悄悄清空已选日期。小点统计当天所有公开文章，草稿不计入。
+日历默认显示最新文章所在月，无文章时显示当前月；可以翻月、回到本月或清除日期。
 
 ## 发布教程与笔记
 
@@ -61,6 +63,9 @@ title: '第一节：介绍'
 description: '这一节会学习什么。'
 publishDate: '2026-10-05'
 series: '系列名称'
+course: 'data-structures'
+chapter: '绪论'
+chapterOrder: 0
 order: 1
 tags: ['学习']
 draft: true
@@ -71,7 +76,21 @@ draft: true
 正文。
 ```
 
-准备公开时把 `draft` 改成 `false`。同一 `series` 按 `order` 从小到大排列，未填写时为 `999`；顺序相同按发布日期从早到晚排列。没有 `series` 的内容列入「独立笔记」。草稿不会生成公开页面，也不会出现在标签、章节导航或 sitemap 中。
+准备公开时把 `draft` 改成 `false`。`course` 是教程栏目的稳定英文标识，`series` 是显示名称。栏目内先按 `chapterOrder` 排章节，再按 `order` 排笔记。当前章节自动展开，展开其他章节会收起前一个。草稿不会生成公开页面，也不会出现在标签、章节导航或 sitemap 中。
+
+栏目由 `src/data/tutorials.ts` 的 `getCourses` 统一管理；新增内容中的 `course` 也会自动加入。操作系统、计算机网络、计算机组成原理目前显示待整理，没有虚构内容。
+
+### Obsidian 展示笔记
+
+已收录数据结构的绪论 2 篇、线性表 5 篇、关联知识卡片 5 篇。源笔记保持不变，导入清单与暂未收录的关联页面见 [导入记录](docs/data-structures-import.md)。
+
+需要重新导入这一批内容时，指定笔记库路径和网站收录日期：
+
+```sh
+node scripts/import-data-structures.mjs --vault /path/to/Study --publish-date 2026-10-06
+```
+
+脚本仅导入清单内的笔记，覆盖对应网站副本，不遍历教材、其他学科或个人工作目录。`sourceUpdated` 保留源笔记更新时间。站内双链会转换成网页链接；尚未收录的引用保留显示文字。两张 Excalidraw 图导出为 SVG，原始文字、布局、颜色和箭头保留，线条使用平滑绘制。
 
 ## 正文书写与阅读
 
@@ -82,7 +101,11 @@ draft: true
 - 代码高亮、复制反馈、长代码展开；关闭 JavaScript 时仍完整显示代码。
 - 图片自适应与点击放大；键盘 Enter 打开，Escape 关闭。
 - 行内和块级数学公式（KaTeX 本地样式与字体）。
+- Obsidian 提示块和可折叠提示；多页示例转换为可折叠段落。
+- Mermaid 流程图按需加载并渲染，保留可查看的源码；无 JavaScript 时仍可读源码。
 - 手机端表格、代码和长公式在块内滚动；返回列表、回到顶部、前后篇导航。
+
+日历的时区、闰年、月边界及筛选参数检查：`node --experimental-strip-types --test tests/calendar.test.mjs`。
 
 代码围栏可写语言和文件名，例如 `ts title="example.ts"`。正文图片使用标准 Markdown 语法，可引用相对于文章的本地图片，或 `public/` 下的绝对路径，例如 `![图片说明](/images/example.png)`。图片说明也会用于大图预览。
 

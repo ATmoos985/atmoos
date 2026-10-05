@@ -7,6 +7,7 @@ import remarkMath from 'remark-math'
 
 // Local integrations
 import rehypeAutolinkHeadings from './src/plugins/rehype-auto-link-headings.ts'
+import rehypeCallouts from './src/plugins/rehype-callouts.ts'
 // Shiki
 import {
   addCollapse,
@@ -59,6 +60,7 @@ export default defineConfig({
     remarkRehype: { footnoteLabel: '注释', footnoteBackLabel: '返回正文引用' },
     remarkPlugins: [remarkMath],
     rehypePlugins: [
+      rehypeCallouts,
       [rehypeKatex, {}],
       rehypeHeadingIds,
       [

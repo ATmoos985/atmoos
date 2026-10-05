@@ -1,0 +1,231 @@
+---
+import { getCourses, tutorialUrl, type Tutorial } from '@/data/tutorials'
+
+interface Props {
+  notes: Tutorial[]
+  activeCourse: string
+  activeId?: string
+}
+const { notes, activeCourse, activeId } = Astro.props
+const courses = getCourses(notes)
+const selected = courses.find((course) => course.id === activeCourse) ?? courses[0]
+const chapters = [...new Set(selected.notes.map((note) => note.data.chapter))]
+const activeChapter =
+  selected.notes.find((note) => note.id === activeId)?.data.chapter ?? chapters[0]
+---
+
+<aside class='course-rail' aria-label='教程栏目'>
+  <details class='course-panel' open data-responsive-nav>
+    <summary>教程栏目 <span class='fold-indicator' aria-hidden='true'>⌃</span></summary>
+    <nav aria-label='选择教程'>
+      <ul>
+        {
+          courses.map((course) => (
+            <li>
+              <a
+                href={
+                  course.notes[0] ? tutorialUrl(course.notes[0]) : `/tutorials?course=${course.id}`
+                }
+                aria-current={course.id === selected.id ? 'true' : undefined}
+              >
+                <>
+                  <span>{course.title}</span>
+                  <small>{course.notes.length || '待整理'}</small>
+                </>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </details>
+</aside>
+<aside class='chapter-rail' aria-label={`${selected.title}章节`}>
+  <details class='chapter-panel' open data-responsive-nav>
+    <summary>{selected.title}<span class='fold-indicator' aria-hidden='true'>⌃</span></summary>
+    <nav aria-label='章节目录'>
+      {
+        chapters.length ? (
+          chapters.map((chapter) => (
+            <details
+              class='chapter-group'
+              name='tutorial-chapters'
+              open={chapter === activeChapter}
+            >
+              <summary>
+                {chapter}
+                <span aria-hidden='true'>⌄</span>
+              </summary>
+              <ol>
+                {selected.notes
+                  .filter((note) => note.data.chapter === chapter)
+                  .map((note) => (
+                    <li>
+                      <a
+                        href={tutorialUrl(note)}
+                        aria-current={note.id === activeId ? 'page' : undefined}
+                      >
+                        {note.data.title}
+                      </a>
+                    </li>
+                  ))}
+              </ol>
+            </details>
+          ))
+        ) : (
+          <p class='chapter-empty'>笔记正在整理中。</p>
+        )
+      }
+    </nav>
+  </details>
+</aside>
+<script>
+  const setupNavigation = () => {
+    const mobile = window.matchMedia('(max-width: 1000px)')
+    document.querySelectorAll<HTMLDetailsElement>('[data-responsive-nav]').forEach((panel) => {
+      if (panel.dataset.ready) return
+      panel.dataset.ready = 'true'
+      panel.open = !mobile.matches
+      mobile.addEventListener('change', (event) => {
+        panel.open = !event.matches
+      })
+    })
+  }
+  setupNavigation()
+  document.addEventListener('astro:page-load', setupNavigation)
+</script>
+<style>
+  aside {
+    position: sticky;
+    top: 1.5rem;
+    min-width: 0;
+    padding-top: 2rem;
+  }
+  .course-rail {
+    border-right: 1px solid hsl(var(--border) / 0.7);
+    padding-right: 1.2rem;
+  }
+  .chapter-rail {
+    border-right: 1px solid hsl(var(--border) / 0.7);
+    padding-right: 1.4rem;
+  }
+  .course-panel,
+  .chapter-panel {
+    max-height: calc(100dvh - 5rem);
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+  summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+    cursor: pointer;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .course-panel > summary,
+  .chapter-panel > summary {
+    padding-bottom: 1.25rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .fold-indicator {
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+  }
+  details:not([open]) > summary .fold-indicator {
+    transform: rotate(180deg);
+  }
+  ul,
+  ol {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .course-panel a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.65rem 0.65rem 0.5rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    border-left: 2px solid transparent;
+  }
+  small {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.6rem;
+    white-space: nowrap;
+  }
+  a[aria-current] {
+    color: hsl(var(--primary));
+    border-left-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.06);
+  }
+  a:hover {
+    color: hsl(var(--primary));
+  }
+  .chapter-group {
+    margin-bottom: 1rem;
+  }
+  .chapter-group > summary {
+    padding: 0.45rem 0;
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+  .chapter-group[open] > summary > span {
+    transform: rotate(180deg);
+  }
+  .chapter-group ol {
+    margin-top: 0.3rem;
+  }
+  .chapter-group a {
+    display: block;
+    padding: 0.5rem 0.65rem;
+    border-left: 2px solid transparent;
+    font-size: 0.76rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+  .chapter-group a[aria-current] {
+    border-left-color: hsl(var(--primary));
+  }
+  .chapter-empty {
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+  }
+  @media (max-width: 1000px) {
+    .course-rail,
+    .chapter-rail {
+      position: static;
+      padding: 0;
+      border-right: 0;
+    }
+    .course-panel,
+    .chapter-panel {
+      position: static;
+      max-height: 22rem;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+    .course-panel > summary,
+    .chapter-panel > summary {
+      padding: 1rem 0;
+    }
+    .course-panel nav,
+    .chapter-panel nav {
+      padding-bottom: 0.75rem;
+    }
+    .course-panel ul {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media print {
+    aside {
+      display: none;
+    }
+  }
+</style>

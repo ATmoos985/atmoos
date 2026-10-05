@@ -4,12 +4,19 @@ interface Props {
   tags: string[]
   activeTag: string
   count: number
+  hiddenFields?: Record<string, string>
+  clearUrl?: string
 }
-const { action, tags, activeTag, count } = Astro.props
+const { action, tags, activeTag, count, hiddenFields = {}, clearUrl = action } = Astro.props
 ---
 
 <div class='content-toolbar'>
   <form {action} method='get' class='tag-filter'>
+    {
+      Object.entries(hiddenFields)
+        .filter(([, value]) => value)
+        .map(([name, value]) => <input type='hidden' {name} {value} />)
+    }
     <label for='tag'>标签</label>
     <select id='tag' name='tag'>
       <option value='' selected={!activeTag}>全部标签</option>
@@ -31,7 +38,7 @@ const { action, tags, activeTag, count } = Astro.props
     <button type='submit'>筛选</button>
     {
       activeTag && (
-        <a class='text-link' href={action}>
+        <a class='text-link' href={clearUrl}>
           清除
         </a>
       )

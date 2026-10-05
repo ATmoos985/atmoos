@@ -1,114 +1,61 @@
 ---
-import { formatDate } from '@/data/blog'
-import { getTutorials, tutorialUrl } from '@/data/tutorials'
+import { getCourses, getTutorials, tutorialUrl } from '@/data/tutorials'
 
-import PageLayout from '@/layouts/BaseLayout.astro'
-import ContentFilter from '@/components/ContentFilter.astro'
+import ContentLayout from '@/layouts/ContentLayout.astro'
+import ArticleReader from '@/components/ArticleReader.astro'
+import TutorialNavigation from '@/components/TutorialNavigation.astro'
 
 export const prerender = false
-
 const notes = await getTutorials()
-const activeTag = notes.length
-  ? (Astro.url.searchParams.get('tag')?.trim().toLowerCase() ?? '')
-  : ''
-const tags = [...new Set(notes.flatMap((note) => note.data.tags))].sort((a, b) =>
-  a.localeCompare(b, 'zh-CN')
-)
-const visible = activeTag ? notes.filter((note) => note.data.tags.includes(activeTag)) : notes
-const series = [...new Set(visible.map((note) => note.data.series))]
+const courses = getCourses(notes)
+const requestedCourse = Astro.url.searchParams.get('course') ?? 'data-structures'
+const course = courses.find((item) => item.id === requestedCourse) ?? courses[0]
+const activeTag = Astro.url.searchParams.get('tag')?.trim().toLowerCase() ?? ''
+const matches = activeTag
+  ? notes.filter((note) => note.data.tags.includes(activeTag))
+  : course.notes
+const first = !activeTag ? course.notes[0] : undefined
+const second = course.notes[1]
 ---
 
-<PageLayout meta={{ title: '教程', description: 'Ami 的教程与学习笔记，按系列和章节整理。' }}>
-  <main id='main-content' class='tutorials-page'>
-    <header class='page-header'><h1 class='editorial-title'>教程</h1></header>
-    {
-      notes.length > 0 && (
-        <ContentFilter action='/tutorials' {tags} {activeTag} count={visible.length} />
-      )
-    }
-    {
-      visible.length ? (
-        series.map((name) => (
-          <section class='note-series' aria-label={name ?? '独立笔记'}>
-            <h2>{name ?? '独立笔记'}</h2>
-            <ol>
-              {visible
-                .filter((note) => note.data.series === name)
-                .map((note) => (
-                  <li>
-                    <article>
-                      <h3>
-                        <a href={tutorialUrl(note)}>{note.data.title}</a>
-                      </h3>
-                      <p>{note.data.description}</p>
-                      <time datetime={note.data.publishDate.toISOString()}>
-                        {formatDate(note.data.publishDate)}
-                      </time>
-                    </article>
-                  </li>
-                ))}
-            </ol>
-          </section>
-        ))
+{
+  first ? (
+    <ArticleReader
+      post={first}
+      next={second ? { title: second.data.title, url: tutorialUrl(second) } : undefined}
+    />
+  ) : (
+    <ContentLayout
+      meta={{
+        title: activeTag ? `教程 · ${activeTag}` : course.title,
+        description: 'Ami 的教程与学习笔记。'
+      }}
+      sectionUrl='/tutorials'
+      sectionLabel='教程'
+      tutorial
+    >
+      <TutorialNavigation slot='navigation' {notes} activeCourse={course.id} />
+      <Fragment slot='header'>
+        <h1 class='editorial-title'>{activeTag ? `标签：${activeTag}` : course.title}</h1>
+      </Fragment>
+      {activeTag && matches.length ? (
+        <ul>
+          {matches.map((note) => (
+            <li>
+              <a href={tutorialUrl(note)}>{note.data.title}</a>
+            </li>
+          ))}
+        </ul>
       ) : (
-        <div class='empty-state'>
-          <p>{activeTag ? '这个标签下暂时没有笔记。' : '暂时还没有公开教程。'}</p>
-          {activeTag && (
-            <a class='text-link' href='/tutorials'>
-              查看全部教程 →
-            </a>
-          )}
-        </div>
-      )
-    }
-  </main>
-</PageLayout>
-
-<style>
-  .tutorials-page {
-    padding-bottom: 2rem;
-  }
-  .note-series {
-    margin-top: 1.75rem;
-  }
-  .note-series h2 {
-    margin: 0 0 1rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-  .note-series ol {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .note-series li + li {
-    margin-top: 1.25rem;
-  }
-  h3 {
-    margin: 0;
-    font-family: var(--display-font);
-    font-size: 1rem;
-    font-weight: 500;
-    line-height: 1.6;
-  }
-  h3 a {
-    display: block;
-    overflow-wrap: anywhere;
-  }
-  h3 a:hover {
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
-  }
-  article p {
-    margin: 0.3rem 0;
-    font-size: 0.8rem;
-    line-height: 1.8;
-    color: hsl(var(--muted-foreground));
-    overflow-wrap: anywhere;
-  }
-  time {
-    font-family: var(--mono-font);
-    font-size: 0.67rem;
-    color: hsl(var(--muted-foreground));
-  }
-</style>
+        <p>
+          {activeTag
+            ? '这个标签下暂时没有笔记。'
+            : '这一栏的笔记正在整理中。你可以先阅读数据结构。'}
+        </p>
+      )}
+      <p>
+        <a href='/tutorials'>阅读数据结构 →</a>
+      </p>
+    </ContentLayout>
+  )
+}

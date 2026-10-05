@@ -1,92 +1,163 @@
 ---
 import { formatDate, getBlogPosts, postUrl, publicationYear } from '@/data/blog'
+import { blogFilterUrl, publicationDay, validDay, validMonth } from '@/data/calendar'
 
 import PageLayout from '@/layouts/BaseLayout.astro'
+import BlogCalendar from '@/components/BlogCalendar.astro'
 import ContentFilter from '@/components/ContentFilter.astro'
 
-// The query-string filter is rendered on the server and also works without JavaScript.
 export const prerender = false
-
 const posts = await getBlogPosts()
-const activeTag = posts.length
-  ? (Astro.url.searchParams.get('tag')?.trim().toLowerCase() ?? '')
-  : ''
+const activeTag = Astro.url.searchParams.get('tag')?.trim().toLowerCase() ?? ''
+const activeDate = validDay(Astro.url.searchParams.get('date'))
+const month =
+  validMonth(Astro.url.searchParams.get('month')) ||
+  activeDate.slice(0, 7) ||
+  publicationDay(posts[0]?.data.publishDate ?? new Date()).slice(0, 7)
 const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =>
   a.localeCompare(b, 'zh-CN')
 )
-const visiblePosts = activeTag ? posts.filter((post) => post.data.tags.includes(activeTag)) : posts
+const counts = new Map<string, number>()
+for (const post of posts) {
+  const date = publicationDay(post.data.publishDate)
+  counts.set(date, (counts.get(date) ?? 0) + 1)
+}
+const visiblePosts = posts.filter(
+  (post) =>
+    (!activeTag || post.data.tags.includes(activeTag)) &&
+    (!activeDate || publicationDay(post.data.publishDate) === activeDate)
+)
 const years = [...new Set(visiblePosts.map((post) => publicationYear(post.data.publishDate)))]
 ---
 
-<PageLayout meta={{ title: '博客', description: 'Ami 的学习笔记与个人文字，按发布日期记录。' }}>
+<PageLayout meta={{ title: '博客', description: 'Ami 的博客与散文，按时间记录。' }}>
   <main id='main-content' class='blog-page'>
     <header class='page-header'>
-      <h1 class='editorial-title'>博客</h1>
+      <h1 class='editorial-title'>博客</h1><p>一些记录，一些想法。</p>
     </header>
-
-    {
-      posts.length > 0 && (
-        <ContentFilter action='/blog' {tags} {activeTag} count={visiblePosts.length} />
-      )
-    }
-
-    {
-      visiblePosts.length ? (
-        years.map((year) => (
-          <section class='timeline-year' aria-label={`${year} 年文章`}>
-            <h2>{year}</h2>
-            <ol class='timeline'>
-              {visiblePosts
-                .filter((post) => publicationYear(post.data.publishDate) === year)
-                .map((post) => (
-                  <li>
-                    <article>
-                      <div class='post-date'>
-                        {post.data.publishDate ? (
+    <div class='blog-columns'>
+      <BlogCalendar {month} {activeDate} {activeTag} {counts} />
+      <div class='blog-entries'>
+        <ContentFilter
+          action='/blog'
+          {tags}
+          {activeTag}
+          count={visiblePosts.length}
+          hiddenFields={{ date: activeDate, month }}
+          clearUrl={blogFilterUrl({ date: activeDate, month })}
+        />
+        {
+          activeDate && (
+            <div class='date-selection'>
+              <>
+                <p>{activeDate.replaceAll('-', '.')} 的文章</p>
+                <a class='text-link' href={blogFilterUrl({ tag: activeTag, month })}>
+                  清除日期 ×
+                </a>
+              </>
+            </div>
+          )
+        }
+        {
+          visiblePosts.length ? (
+            years.map((year) => (
+              <section class='timeline-year' aria-label={`${year} 年文章`}>
+                <h2>{year}</h2>
+                <ol class='timeline'>
+                  {visiblePosts
+                    .filter((post) => publicationYear(post.data.publishDate) === year)
+                    .map((post) => (
+                      <li>
+                        <article>
                           <time datetime={post.data.publishDate.toISOString()}>
                             {formatDate(post.data.publishDate)}
                           </time>
-                        ) : (
-                          <span>发布日期未记录</span>
-                        )}
-                      </div>
-                      <div class='post-copy'>
-                        <h3>
-                          <a href={postUrl(post)}>{post.data.title}</a>
-                        </h3>
-                      </div>
-                    </article>
-                  </li>
-                ))}
-            </ol>
-          </section>
-        ))
-      ) : (
-        <div class='empty-state'>
-          <p>{activeTag ? '这个标签下暂时没有文章。' : '暂时还没有公开文章。'}</p>
-          {activeTag && (
-            <a class='text-link' href='/blog'>
-              查看全部文章 →
-            </a>
-          )}
-        </div>
-      )
-    }
+                          <div class='post-copy'>
+                            <h3>
+                              <a href={postUrl(post)}>{post.data.title}</a>
+                            </h3>
+                            <p>{post.data.description}</p>
+                            <ul class='post-tags' aria-label='文章标签'>
+                              {post.data.tags.map((tag) => (
+                                <li>
+                                  <a href={blogFilterUrl({ tag, date: activeDate, month })}>
+                                    #{tag}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </article>
+                      </li>
+                    ))}
+                </ol>
+              </section>
+            ))
+          ) : (
+            <div class='empty-state'>
+              <>
+                <p>{activeDate || activeTag ? '当前筛选下没有文章。' : '暂时还没有公开文章。'}</p>
+                <p class='empty-hint'>
+                  {activeDate || activeTag ? (
+                    <a class='text-link' href='/blog'>
+                      查看全部文章 →
+                    </a>
+                  ) : (
+                    '写下的博客与散文会按时间出现在这里。'
+                  )}
+                </p>
+              </>
+            </div>
+          )
+        }
+      </div>
+    </div>
   </main>
 </PageLayout>
-
 <style>
   .blog-page {
     padding-bottom: 2rem;
   }
+  .page-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .page-header p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: hsl(var(--muted-foreground));
+  }
+  .blog-columns {
+    display: grid;
+    grid-template-columns: clamp(13rem, 19vw, 18rem) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+  .blog-entries {
+    min-width: 0;
+    max-width: 60rem;
+  }
+  .date-selection {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: 0.78rem;
+  }
+  .date-selection p {
+    margin: 0;
+    color: hsl(var(--primary));
+  }
   .timeline-year {
-    padding-top: 1.5rem;
+    padding-top: 1.6rem;
   }
   .timeline-year > h2 {
-    margin: 0 0 1rem;
-    font-family: var(--display-font);
-    font-size: 1.2rem;
+    margin: 0 0 1.2rem;
+    font-size: 1.1rem;
     font-weight: 500;
+    font-family: var(--mono-font);
   }
   .timeline {
     padding: 0 0 0 1.1rem;
@@ -96,7 +167,7 @@ const years = [...new Set(visiblePosts.map((post) => publicationYear(post.data.p
   }
   .timeline > li {
     position: relative;
-    padding: 0 0 0.85rem;
+    padding-bottom: 1.7rem;
   }
   .timeline > li::before {
     position: absolute;
@@ -105,52 +176,66 @@ const years = [...new Set(visiblePosts.map((post) => publicationYear(post.data.p
     width: 5px;
     height: 5px;
     content: '';
-    border: 1px solid hsl(var(--primary));
     border-radius: 50%;
-    background: hsl(var(--background));
-  }
-  .timeline > li:first-child::before {
     background: hsl(var(--primary));
-  }
-  .timeline article {
-    display: grid;
-    grid-template-columns: 5.8rem minmax(0, 1fr);
-    gap: 0.75rem;
-  }
-  .post-date {
-    padding-top: 0.2rem;
-    font-family: var(--mono-font);
-    color: hsl(var(--muted-foreground));
-    font-size: 0.67rem;
-  }
-  .post-copy {
-    min-width: 0;
   }
   .timeline > li:last-child {
     padding-bottom: 0;
   }
-  .post-copy h3 {
+  article {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: 1.1rem;
+  }
+  time {
+    padding-top: 0.3rem;
+    font: 0.7rem var(--mono-font);
+    color: hsl(var(--muted-foreground));
+  }
+  .post-copy {
+    min-width: 0;
+  }
+  h3 {
     margin: 0;
-    font-family: var(--display-font);
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.02rem;
     line-height: 1.6;
+    font-weight: 500;
     overflow-wrap: anywhere;
   }
-  .post-copy h3 a {
-    display: block;
-  }
-  .post-copy h3 a:hover {
+  h3 a:hover {
     text-decoration: underline;
     text-underline-offset: 0.25em;
   }
-  @media (max-width: 640px) {
-    .timeline article {
+  .post-copy p {
+    margin: 0.45rem 0;
+    font-size: 0.84rem;
+    line-height: 1.8;
+    color: hsl(var(--muted-foreground));
+  }
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0.45rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.68rem;
+    color: hsl(var(--muted-foreground));
+  }
+  .empty-hint {
+    font-size: 0.8rem;
+  }
+  @media (max-width: 700px) {
+    .blog-columns {
       grid-template-columns: 1fr;
-      gap: 0.15rem;
+      gap: 1.8rem;
     }
-    .post-copy h3 {
-      font-size: 1rem;
+    .page-header {
+      gap: 0.5rem 1rem;
+    }
+    article {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
     }
   }
 </style>

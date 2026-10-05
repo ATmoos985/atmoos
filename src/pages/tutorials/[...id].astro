@@ -10,7 +10,7 @@ export async function getStaticPaths() {
   const link = (note: (typeof notes)[number] | undefined) =>
     note ? { title: note.data.title, url: tutorialUrl(note) } : undefined
   return notes.map((post) => {
-    const chapters = notes.filter((note) => note.data.series === post.data.series)
+    const chapters = notes.filter((note) => note.data.course === post.data.course)
     const index = chapters.findIndex((note) => note.id === post.id)
     return {
       params: { id: post.id },
