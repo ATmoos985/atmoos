@@ -1,0 +1,54 @@
+---
+import type { MarkdownHeading } from 'astro'
+
+interface Props {
+  headings: MarkdownHeading[]
+  sidebar?: boolean
+}
+const { headings, sidebar = false } = Astro.props
+const baseDepth = Math.min(...headings.map((heading) => heading.depth))
+---
+
+<nav class:list={['contents-nav', { 'contents-sidebar': sidebar }]} aria-label='文章目录'>
+  <ol>
+    {
+      headings.map((heading) => (
+        <li style={`--depth: ${heading.depth - baseDepth}`}>
+          <a href={`#${heading.slug}`}>{heading.text}</a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+<style>
+  ol {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+  }
+  li {
+    padding-left: calc(var(--depth) * 0.75rem);
+    overflow-wrap: anywhere;
+  }
+  a {
+    display: block;
+    padding: 0.35rem 0;
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: hsl(var(--muted-foreground));
+  }
+  a:hover,
+  a[aria-current='location'] {
+    color: hsl(var(--primary));
+  }
+  a[aria-current='location'] {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .contents-sidebar ol {
+    margin: 0;
+  }
+  .contents-sidebar a {
+    font-size: 0.73rem;
+  }
+</style>

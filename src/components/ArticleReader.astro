@@ -5,6 +5,7 @@ import { formatDate, tagUrl, type BlogPost } from '@/data/blog'
 import { getTutorials, tutorialTagUrl, type Tutorial } from '@/data/tutorials'
 
 import PageLayout from '@/layouts/ContentLayout.astro'
+import ArticleContents from '@/components/ArticleContents.astro'
 import TutorialNavigation from '@/components/TutorialNavigation.astro'
 
 import 'katex/dist/katex.min.css'
@@ -43,6 +44,7 @@ const contents = headings.filter((heading) => heading.depth >= 2 && heading.dept
   {sectionLabel}
   language={data.language}
   tutorial={isTutorial}
+  hasContents={contents.length > 0}
 >
   <Fragment slot='navigation'>
     {
@@ -101,20 +103,15 @@ const contents = headings.filter((heading) => heading.depth >= 2 && heading.dept
 
   <Fragment slot='contents'>
     {
-      contents.length > 0 && (
-        <details class='article-contents' open={!isTutorial}>
-          <summary>文章目录</summary>
-          <nav aria-label='文章目录'>
-            <ol>
-              {contents.map((heading) => (
-                <li style={`--depth: ${heading.depth - 2}`}>
-                  <a href={`#${heading.slug}`}>{heading.text}</a>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        </details>
-      )
+      contents.length > 0 &&
+        (isTutorial ? (
+          <ArticleContents headings={contents} sidebar />
+        ) : (
+          <details class='article-contents' open>
+            <summary>文章目录</summary>
+            <ArticleContents headings={contents} />
+          </details>
+        ))
     }
   </Fragment>
 
@@ -185,21 +182,6 @@ const contents = headings.filter((heading) => heading.depth >= 2 && heading.dept
     cursor: pointer;
     color: hsl(var(--muted-foreground));
     width: fit-content;
-  }
-  .article-contents ol {
-    list-style: none;
-    padding: 0;
-    margin: 0.75rem 0 0;
-    line-height: 1.9;
-  }
-  .article-contents li {
-    margin-top: 0.3rem;
-    padding-left: calc(var(--depth) * 1rem);
-    overflow-wrap: anywhere;
-  }
-  .article-contents a:hover {
-    text-decoration: underline;
-    text-underline-offset: 0.2rem;
   }
   .article-adjacent {
     display: grid;

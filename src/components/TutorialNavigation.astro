@@ -14,106 +14,87 @@ const activeChapter =
   selected.notes.find((note) => note.id === activeId)?.data.chapter ?? chapters[0]
 ---
 
-<aside class='course-rail' aria-label='教程栏目'>
-  <details class='course-panel' open data-responsive-nav>
-    <summary>教程栏目 <span class='fold-indicator' aria-hidden='true'>⌃</span></summary>
-    <nav aria-label='选择教程'>
-      <ul>
+<div class='navigation-columns'>
+  <aside class='course-rail' aria-label='教程栏目'>
+    <details class='course-panel' open>
+      <summary>教程栏目 <span class='fold-indicator' aria-hidden='true'>⌃</span></summary>
+      <nav aria-label='选择教程'>
+        <ul>
+          {
+            courses.map((course) => (
+              <li>
+                <a
+                  href={
+                    course.notes[0]
+                      ? tutorialUrl(course.notes[0])
+                      : `/tutorials?course=${course.id}`
+                  }
+                  aria-current={course.id === selected.id ? 'true' : undefined}
+                >
+                  <>
+                    <span>{course.title}</span>
+                    <small>{course.notes.length || '待整理'}</small>
+                  </>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </details>
+  </aside>
+  <aside class='chapter-rail' aria-label={`${selected.title}章节`}>
+    <details class='chapter-panel' open>
+      <summary>{selected.title}<span class='fold-indicator' aria-hidden='true'>⌃</span></summary>
+      <nav aria-label='章节目录'>
         {
-          courses.map((course) => (
-            <li>
-              <a
-                href={
-                  course.notes[0] ? tutorialUrl(course.notes[0]) : `/tutorials?course=${course.id}`
-                }
-                aria-current={course.id === selected.id ? 'true' : undefined}
+          chapters.length ? (
+            chapters.map((chapter) => (
+              <details
+                class='chapter-group'
+                name='tutorial-chapters'
+                open={chapter === activeChapter}
               >
-                <>
-                  <span>{course.title}</span>
-                  <small>{course.notes.length || '待整理'}</small>
-                </>
-              </a>
-            </li>
-          ))
+                <summary>
+                  {chapter}
+                  <span aria-hidden='true'>⌄</span>
+                </summary>
+                <ol>
+                  {selected.notes
+                    .filter((note) => note.data.chapter === chapter)
+                    .map((note) => (
+                      <li>
+                        <a
+                          href={tutorialUrl(note)}
+                          aria-current={note.id === activeId ? 'page' : undefined}
+                        >
+                          {note.data.title}
+                        </a>
+                      </li>
+                    ))}
+                </ol>
+              </details>
+            ))
+          ) : (
+            <p class='chapter-empty'>笔记正在整理中。</p>
+          )
         }
-      </ul>
-    </nav>
-  </details>
-</aside>
-<aside class='chapter-rail' aria-label={`${selected.title}章节`}>
-  <details class='chapter-panel' open data-responsive-nav>
-    <summary>{selected.title}<span class='fold-indicator' aria-hidden='true'>⌃</span></summary>
-    <nav aria-label='章节目录'>
-      {
-        chapters.length ? (
-          chapters.map((chapter) => (
-            <details
-              class='chapter-group'
-              name='tutorial-chapters'
-              open={chapter === activeChapter}
-            >
-              <summary>
-                {chapter}
-                <span aria-hidden='true'>⌄</span>
-              </summary>
-              <ol>
-                {selected.notes
-                  .filter((note) => note.data.chapter === chapter)
-                  .map((note) => (
-                    <li>
-                      <a
-                        href={tutorialUrl(note)}
-                        aria-current={note.id === activeId ? 'page' : undefined}
-                      >
-                        {note.data.title}
-                      </a>
-                    </li>
-                  ))}
-              </ol>
-            </details>
-          ))
-        ) : (
-          <p class='chapter-empty'>笔记正在整理中。</p>
-        )
-      }
-    </nav>
-  </details>
-</aside>
-<script>
-  const setupNavigation = () => {
-    const mobile = window.matchMedia('(max-width: 1000px)')
-    document.querySelectorAll<HTMLDetailsElement>('[data-responsive-nav]').forEach((panel) => {
-      if (panel.dataset.ready) return
-      panel.dataset.ready = 'true'
-      panel.open = !mobile.matches
-      mobile.addEventListener('change', (event) => {
-        panel.open = !event.matches
-      })
-    })
-  }
-  setupNavigation()
-  document.addEventListener('astro:page-load', setupNavigation)
-</script>
+      </nav>
+    </details>
+  </aside>
+</div>
 <style>
+  .navigation-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 1.2rem;
+  }
   aside {
-    position: sticky;
-    top: 1.5rem;
     min-width: 0;
-    padding-top: 2rem;
   }
   .course-rail {
     border-right: 1px solid hsl(var(--border) / 0.7);
-    padding-right: 1.2rem;
-  }
-  .chapter-rail {
-    border-right: 1px solid hsl(var(--border) / 0.7);
-    padding-right: 1.4rem;
-  }
-  .course-panel,
-  .chapter-panel {
-    max-height: calc(100dvh - 5rem);
-    overflow: auto;
-    scrollbar-width: thin;
+    padding-right: 0.8rem;
   }
   summary {
     display: flex;
@@ -197,26 +178,22 @@ const activeChapter =
     font-size: 0.75rem;
     color: hsl(var(--muted-foreground));
   }
-  @media (max-width: 1000px) {
-    .course-rail,
-    .chapter-rail {
-      position: static;
+  @media (max-width: 1500px) {
+    .navigation-columns {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+    .course-rail {
       padding: 0;
       border-right: 0;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid hsl(var(--border) / 0.7);
     }
-    .course-panel,
-    .chapter-panel {
-      position: static;
-      max-height: 22rem;
-      border-bottom: 1px solid hsl(var(--border));
-    }
+  }
+  @media (max-width: 1100px) {
     .course-panel > summary,
     .chapter-panel > summary {
-      padding: 1rem 0;
-    }
-    .course-panel nav,
-    .chapter-panel nav {
-      padding-bottom: 0.75rem;
+      padding: 0.5rem 0;
     }
     .course-panel ul {
       display: grid;

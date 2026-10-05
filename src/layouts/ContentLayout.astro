@@ -1,6 +1,7 @@
 ---
 import type { SiteMeta } from 'astro-pure/types'
 import PageLayout from '@/layouts/BaseLayout.astro'
+import ReaderSidebar from '@/components/ReaderSidebar.astro'
 import { integ } from '@/site-config'
 
 interface Props {
@@ -9,21 +10,47 @@ interface Props {
   sectionLabel: string
   language?: string
   tutorial?: boolean
+  hasContents?: boolean
 }
 
-const { meta, sectionUrl, sectionLabel, language = 'zh-CN', tutorial = false } = Astro.props
+const {
+  meta,
+  sectionUrl,
+  sectionLabel,
+  language = 'zh-CN',
+  tutorial = false,
+  hasContents = false
+} = Astro.props
 ---
 
 <PageLayout {meta}>
-  <div class:list={['reader-layout', { 'tutorial-workspace': tutorial }]}>
-    <slot name='navigation' />
+  <div
+    class:list={[
+      'reader-layout',
+      { 'tutorial-workspace': tutorial, 'has-contents': tutorial && hasContents }
+    ]}
+  >
+    {
+      tutorial && (
+        <ReaderSidebar side='left' label='教程导航'>
+          <slot name='navigation' />
+        </ReaderSidebar>
+      )
+    }
+    {
+      tutorial && hasContents && (
+        <ReaderSidebar side='right' label='文章目录'>
+          <slot name='contents' />
+        </ReaderSidebar>
+      )
+    }
     <main id='main-content' class='reading-page'>
       <a class='reading-back text-link' href={sectionUrl}>← {sectionLabel}</a>
       <article lang={language}>
         <header class='article-header'>
           <slot name='header' />
         </header>
-        <slot name='contents' />
+        {!tutorial && <slot name='contents' />}
         <div class:list={['article-prose prose text-base max-w-none', integ.typography.class]}>
           <slot />
         </div>
@@ -45,6 +72,7 @@ const { meta, sectionUrl, sectionLabel, language = 'zh-CN', tutorial = false } =
 <script>
   import '../scripts/reading'
   import '../scripts/diagrams'
+  import '../scripts/reader-sidebars'
 </script>
 
 <style>
@@ -52,13 +80,28 @@ const { meta, sectionUrl, sectionLabel, language = 'zh-CN', tutorial = false } =
     min-width: 0;
   }
   .tutorial-workspace {
+    --left-rail-width: clamp(22rem, 26vw, 27rem);
+    --right-rail-width: clamp(12rem, 15vw, 15rem);
     display: grid;
-    grid-template-columns: clamp(9rem, 12vw, 12rem) clamp(12rem, 17vw, 16rem) minmax(0, 1fr);
-    gap: clamp(1.5rem, 2.5vw, 3rem);
+    grid-template-columns: var(--left-rail-width) minmax(0, 1fr);
+    grid-template-areas: 'navigation main';
+    gap: clamp(1.25rem, 2vw, 2.5rem);
     align-items: start;
   }
+  .tutorial-workspace.has-contents {
+    grid-template-columns: var(--left-rail-width) minmax(0, 1fr) var(--right-rail-width);
+    grid-template-areas: 'navigation main contents';
+  }
+  :global(.tutorial-workspace:has(> [data-reader-sidebar='left']:not([open]))) {
+    --left-rail-width: 2.25rem;
+  }
+  :global(.tutorial-workspace:has(> [data-reader-sidebar='right']:not([open]))) {
+    --right-rail-width: 2.25rem;
+  }
   .tutorial-workspace .reading-page {
-    max-width: 52rem;
+    grid-area: main;
+    max-width: 64rem;
+    justify-self: center;
     padding-top: 2rem;
   }
   .tutorial-workspace .article-header {
@@ -133,10 +176,21 @@ const { meta, sectionUrl, sectionLabel, language = 'zh-CN', tutorial = false } =
     font-size: 0.8rem;
     overflow-wrap: anywhere;
   }
-  @media (max-width: 1000px) {
+  @media (min-width: 1101px) and (max-width: 1500px) {
     .tutorial-workspace {
+      --left-rail-width: 14rem;
+      --right-rail-width: 12rem;
+    }
+  }
+  @media (max-width: 1100px) {
+    .tutorial-workspace,
+    .tutorial-workspace.has-contents {
       grid-template-columns: 1fr;
+      grid-template-areas: 'navigation' 'main';
       gap: 0;
+    }
+    .tutorial-workspace.has-contents {
+      grid-template-areas: 'navigation' 'contents' 'main';
     }
     .tutorial-workspace .reading-page {
       padding-top: 1.5rem;
