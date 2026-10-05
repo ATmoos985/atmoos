@@ -1,324 +1,113 @@
 ---
-import { BackToTop } from 'astro-pure/components/pages'
 import type { SiteMeta } from 'astro-pure/types'
-import { Icon } from 'astro-pure/user'
-import { cn } from 'astro-pure/utils'
 import PageLayout from '@/layouts/BaseLayout.astro'
 import { integ } from '@/site-config'
 
 interface Props {
   meta: SiteMeta
-  highlightColor?: string
-  back?: string
+  sectionUrl: string
+  sectionLabel: string
+  language?: string
 }
 
-const { meta, highlightColor, back = '/', ...props } = Astro.props
+const { meta, sectionUrl, sectionLabel, language = 'zh-CN' } = Astro.props
 ---
 
-<PageLayout {meta} {highlightColor} {...props}>
-  <div class='content-layout'>
-    <main class='content-grid'>
-      <aside id='sidebar' class='content-sidebar animate' aria-label='笔记目录'>
-        <div class='sidebar-mobile-head'>
-          <span class='mono-label'>Notebook navigation</span>
-          <button id='sidebar-close' type='button' aria-label='关闭笔记目录'>
-            <span aria-hidden='true'>×</span>
-          </button>
-        </div>
-        <div class='sidebar-inner'>
-          <a class='content-back mono-label' href={back}>← 返回笔记目录</a>
-          <slot name='sidebar' />
-        </div>
-      </aside>
-
-      <article class='content-article'>
-        <header id='content-header' class='animate'>
-          <slot name='header' />
-        </header>
-
-        <div
-          id='content'
-          class={cn('article-prose animate prose text-base max-w-none', integ.typography.class)}
-        >
-          <slot />
-        </div>
-
-        <footer class='article-bottom'>
-          <slot name='bottom' />
-        </footer>
-      </article>
-    </main>
-
-    <div id='sidebar-shade' aria-hidden='true'></div>
-  </div>
-
-  <BackToTop header='content-header' content='content'>
-    <button
-      slot='other-icons'
-      aria-controls='sidebar'
-      aria-expanded='false'
-      aria-label='打开笔记目录'
-      class='sidebar-button'
-      id='sidebar-btn'
-      type='button'
-    >
-      <Icon name='list' />
-    </button>
-  </BackToTop>
+<PageLayout {meta}>
+  <main id='main-content' class='reading-page'>
+    <a class='reading-back text-link' href={sectionUrl}>← {sectionLabel}</a>
+    <article lang={language}>
+      <header class='article-header'>
+        <slot name='header' />
+      </header>
+      <slot name='contents' />
+      <div class:list={['article-prose prose text-base max-w-none', integ.typography.class]}>
+        <slot />
+      </div>
+    </article>
+    <slot name='adjacent' />
+    <footer class='reading-footer'>
+      <a class='text-link' href={sectionUrl}>← 返回{sectionLabel}</a>
+      <a class='text-link' href='#main-content'>回到顶部 ↑</a>
+    </footer>
+    <p class='reader-status' role='status' aria-live='polite' data-reader-status></p>
+    <dialog class='image-dialog' aria-label='图片预览'>
+      <button type='button' class='image-close'>关闭 ×</button>
+      <div class='image-preview'></div>
+    </dialog>
+  </main>
 </PageLayout>
 
 <script>
-  const sidebarButton = document.getElementById('sidebar-btn')
-  const sidebarClose = document.getElementById('sidebar-close')
-  const sidebar = document.getElementById('sidebar')
-  const sidebarShade = document.getElementById('sidebar-shade')
-  const focusableSelector =
-    'a[href], button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'
-  const mobileQuery = window.matchMedia('(max-width: 1100px)')
-
-  const getFocusable = () => {
-    if (!sidebar) return []
-
-    return [...sidebar.querySelectorAll<HTMLElement>(focusableSelector)].filter((element) => {
-      const closedGroup = element.closest('details:not([open])')
-      if (
-        closedGroup &&
-        !(element.tagName === 'SUMMARY' && element.parentElement === closedGroup)
-      ) {
-        return false
-      }
-
-      const style = window.getComputedStyle(element)
-      return (
-        style.display !== 'none' &&
-        style.visibility !== 'hidden' &&
-        element.getClientRects().length > 0
-      )
-    })
-  }
-
-  const sidebarIsOpen = () => sidebar?.classList.contains('show') ?? false
-
-  const setSidebar = (isOpen: boolean, restoreFocus = true) => {
-    const wasOpen = sidebarIsOpen()
-    sidebar?.classList.toggle('show', isOpen)
-    sidebarShade?.classList.toggle('show', isOpen)
-    document.body.classList.toggle('sidebar-open', isOpen)
-    sidebarButton?.setAttribute('aria-expanded', String(isOpen))
-
-    if (isOpen) {
-      sidebar?.setAttribute('role', 'dialog')
-      sidebar?.setAttribute('aria-modal', 'true')
-      window.setTimeout(() => (sidebarClose ?? getFocusable()[0])?.focus(), 230)
-      return
-    }
-
-    sidebar?.removeAttribute('role')
-    sidebar?.removeAttribute('aria-modal')
-    if (wasOpen && restoreFocus) sidebarButton?.focus()
-  }
-
-  sidebarButton?.addEventListener('click', () => setSidebar(!sidebarIsOpen()))
-  sidebarClose?.addEventListener('click', () => setSidebar(false))
-  sidebarShade?.addEventListener('click', () => setSidebar(false))
-  sidebar?.addEventListener('click', (event) => {
-    const target = event.target
-    const link = target instanceof Element ? target.closest('a[href]') : undefined
-    if (mobileQuery.matches && link) {
-      setSidebar(false, link.getAttribute('href')?.startsWith('#') ?? false)
-    }
-  })
-
-  document.addEventListener('keydown', (event) => {
-    if (!sidebarIsOpen()) return
-
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      setSidebar(false)
-      return
-    }
-
-    if (event.key !== 'Tab' || !sidebar) return
-    const focusable = getFocusable()
-    if (!focusable.length) return
-
-    const first = focusable[0]
-    const last = focusable.at(-1)
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault()
-      last?.focus()
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault()
-      first.focus()
-    }
-  })
-
-  mobileQuery.addEventListener('change', ({ matches }) => {
-    if (!matches) setSidebar(false, false)
-  })
+  import '../scripts/reading'
 </script>
 
 <style>
-  .content-layout {
-    padding-top: 0.5rem;
-  }
-
-  .content-back {
-    display: inline-flex;
-    margin-bottom: 1.4rem;
-    color: hsl(var(--muted-foreground));
-  }
-
-  .content-back:hover {
-    color: hsl(var(--foreground));
-  }
-
-  .content-grid {
-    display: grid;
-    grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr);
-    gap: clamp(2.5rem, 5vw, 4.75rem);
-    align-items: start;
-  }
-
-  .content-article {
+  .reading-page {
+    padding: 1.5rem 0;
     min-width: 0;
   }
-
-  .content-sidebar {
-    position: sticky;
-    top: 6.2rem;
-    max-height: calc(100vh - 7.5rem);
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+  .reading-back {
+    font-size: 0.78rem;
+    color: hsl(var(--muted-foreground));
   }
-
-  .sidebar-inner {
-    padding-bottom: 2rem;
+  .article-header {
+    padding: 1.25rem 0 1rem;
+    border-bottom: 1px solid hsl(var(--border));
   }
-
-  .sidebar-mobile-head {
-    display: none;
-  }
-
   .article-prose {
-    margin-top: 3rem;
-    overflow-x: hidden;
+    min-width: 0;
+    margin-top: 1.5rem;
+    overflow-wrap: anywhere;
   }
-
-  .article-bottom {
-    margin-top: 4rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid hsl(var(--foreground));
+  .reading-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid hsl(var(--border));
+    font-size: 0.78rem;
   }
-
-  #sidebar-shade {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    visibility: hidden;
-    background: hsl(var(--foreground) / 0.5);
-    backdrop-filter: blur(3px);
-    opacity: 0;
-    transition:
-      opacity 180ms ease,
-      visibility 180ms ease;
-  }
-
-  .sidebar-button {
-    display: none;
-    width: 3rem;
-    height: 3rem;
-    place-items: center;
-    border: 1px solid hsl(var(--border));
-    color: hsl(var(--foreground));
-    background: hsl(var(--background));
-  }
-
-  :global(body.sidebar-open) {
+  .reader-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
     overflow: hidden;
+    clip-path: inset(50%);
   }
-
-  @media (max-width: 1100px) {
-    .content-grid {
-      display: block;
-    }
-
-    .content-sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 70;
-      width: min(88vw, 23rem);
-      max-height: 100dvh;
-      height: 100dvh;
-      padding: 1rem 1.25rem 2rem;
-      border-right: 1px solid hsl(var(--border));
-      background: hsl(var(--background));
-      box-shadow: 12px 0 30px hsl(var(--foreground) / 0.14);
-      visibility: hidden;
-      transform: translateX(-104%);
-      transition:
-        transform 220ms ease,
-        visibility 220ms ease;
-    }
-
-    .content-sidebar.show {
-      visibility: visible;
-      transform: translateX(0);
-    }
-
-    #sidebar-shade.show {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .sidebar-mobile-head {
-      position: sticky;
-      top: -1rem;
-      z-index: 2;
-      display: flex;
-      min-height: 3.75rem;
-      align-items: center;
-      justify-content: space-between;
-      margin: -1rem -1.25rem 1.2rem;
-      padding: 0 1.25rem;
-      border-bottom: 1px solid hsl(var(--border));
-      background: hsl(var(--background) / 0.96);
-      backdrop-filter: blur(12px);
-    }
-
-    .sidebar-mobile-head span {
-      color: hsl(var(--muted-foreground));
-    }
-
-    #sidebar-close {
-      display: grid;
-      width: 2.35rem;
-      height: 2.35rem;
-      cursor: pointer;
-      place-items: center;
-      border: 1px solid hsl(var(--border));
-      color: hsl(var(--foreground));
-      background: hsl(var(--background));
-      font-size: 1.35rem;
-      line-height: 1;
-    }
-
-    #sidebar-close:hover {
-      border-color: hsl(var(--foreground));
-      color: hsl(var(--primary));
-    }
-
-    .sidebar-button {
-      display: grid;
-    }
+  .image-dialog {
+    max-width: 96vw;
+    max-height: 95dvh;
+    padding: 2.75rem 1rem 1rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    .content-sidebar,
-    #sidebar-shade {
-      transition: none;
-    }
+  .image-dialog::backdrop {
+    background: rgb(0 0 0 / 0.65);
+  }
+  .image-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .image-preview :global(img) {
+    display: block;
+    max-width: 100%;
+    max-height: 78dvh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  .image-preview :global(p) {
+    margin: 0.75rem 0 0;
+    max-width: 100%;
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
   }
 </style>

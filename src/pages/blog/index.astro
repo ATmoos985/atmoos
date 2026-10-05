@@ -1,0 +1,156 @@
+---
+import { formatDate, getBlogPosts, postUrl, publicationYear } from '@/data/blog'
+
+import PageLayout from '@/layouts/BaseLayout.astro'
+import ContentFilter from '@/components/ContentFilter.astro'
+
+// The query-string filter is rendered on the server and also works without JavaScript.
+export const prerender = false
+
+const posts = await getBlogPosts()
+const activeTag = posts.length
+  ? (Astro.url.searchParams.get('tag')?.trim().toLowerCase() ?? '')
+  : ''
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =>
+  a.localeCompare(b, 'zh-CN')
+)
+const visiblePosts = activeTag ? posts.filter((post) => post.data.tags.includes(activeTag)) : posts
+const years = [...new Set(visiblePosts.map((post) => publicationYear(post.data.publishDate)))]
+---
+
+<PageLayout meta={{ title: '博客', description: 'Ami 的学习笔记与个人文字，按发布日期记录。' }}>
+  <main id='main-content' class='blog-page'>
+    <header class='page-header'>
+      <h1 class='editorial-title'>博客</h1>
+    </header>
+
+    {
+      posts.length > 0 && (
+        <ContentFilter action='/blog' {tags} {activeTag} count={visiblePosts.length} />
+      )
+    }
+
+    {
+      visiblePosts.length ? (
+        years.map((year) => (
+          <section class='timeline-year' aria-label={`${year} 年文章`}>
+            <h2>{year}</h2>
+            <ol class='timeline'>
+              {visiblePosts
+                .filter((post) => publicationYear(post.data.publishDate) === year)
+                .map((post) => (
+                  <li>
+                    <article>
+                      <div class='post-date'>
+                        {post.data.publishDate ? (
+                          <time datetime={post.data.publishDate.toISOString()}>
+                            {formatDate(post.data.publishDate)}
+                          </time>
+                        ) : (
+                          <span>发布日期未记录</span>
+                        )}
+                      </div>
+                      <div class='post-copy'>
+                        <h3>
+                          <a href={postUrl(post)}>{post.data.title}</a>
+                        </h3>
+                      </div>
+                    </article>
+                  </li>
+                ))}
+            </ol>
+          </section>
+        ))
+      ) : (
+        <div class='empty-state'>
+          <p>{activeTag ? '这个标签下暂时没有文章。' : '暂时还没有公开文章。'}</p>
+          {activeTag && (
+            <a class='text-link' href='/blog'>
+              查看全部文章 →
+            </a>
+          )}
+        </div>
+      )
+    }
+  </main>
+</PageLayout>
+
+<style>
+  .blog-page {
+    padding-bottom: 2rem;
+  }
+  .timeline-year {
+    padding-top: 1.5rem;
+  }
+  .timeline-year > h2 {
+    margin: 0 0 1rem;
+    font-family: var(--display-font);
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+  .timeline {
+    padding: 0 0 0 1.1rem;
+    margin: 0 0 0 0.3rem;
+    list-style: none;
+    border-left: 1px solid hsl(var(--border));
+  }
+  .timeline > li {
+    position: relative;
+    padding: 0 0 0.85rem;
+  }
+  .timeline > li::before {
+    position: absolute;
+    top: 0.6rem;
+    left: calc(-1.1rem - 3px);
+    width: 5px;
+    height: 5px;
+    content: '';
+    border: 1px solid hsl(var(--primary));
+    border-radius: 50%;
+    background: hsl(var(--background));
+  }
+  .timeline > li:first-child::before {
+    background: hsl(var(--primary));
+  }
+  .timeline article {
+    display: grid;
+    grid-template-columns: 5.8rem minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  .post-date {
+    padding-top: 0.2rem;
+    font-family: var(--mono-font);
+    color: hsl(var(--muted-foreground));
+    font-size: 0.67rem;
+  }
+  .post-copy {
+    min-width: 0;
+  }
+  .timeline > li:last-child {
+    padding-bottom: 0;
+  }
+  .post-copy h3 {
+    margin: 0;
+    font-family: var(--display-font);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .post-copy h3 a {
+    display: block;
+  }
+  .post-copy h3 a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+  @media (max-width: 640px) {
+    .timeline article {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
+    }
+    .post-copy h3 {
+      font-size: 1rem;
+    }
+  }
+</style>

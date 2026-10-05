@@ -1,11 +1,8 @@
 ---
-import { Image } from 'astro:assets'
 import Analytics from '@vercel/analytics/astro'
 
 import type { SiteMeta } from 'astro-pure/types'
-import { Icon } from 'astro-pure/user'
 import BaseHead from '@/components/BaseHead.astro'
-import avatar from '@/assets/avatar-atmoos.png'
 import config from '@/site-config'
 
 import '@/assets/styles/global.css'
@@ -13,254 +10,43 @@ import '@/assets/styles/app.css'
 
 interface Props {
   meta: SiteMeta
-  highlightColor?: string
-  class?: string
 }
 
-const {
-  meta: { articleDate, description = config.description, ogImage, title },
-  highlightColor,
-  class: bodyClass,
-  ...props
-} = Astro.props
-
+const { meta } = Astro.props
 const pathname = Astro.url.pathname
-const menu = config.header.menu ?? []
 const isActive = (link: string) =>
   link === '/' ? pathname === '/' : pathname === link || pathname.startsWith(`${link}/`)
 ---
 
 <html lang={config.locale.lang}>
   <head>
-    <BaseHead {articleDate} {description} {ogImage} {title} />
-    <script is:inline>
-      ;(() => {
-        const applyStoredTheme = () => {
-          let theme = localStorage.getItem('theme')
-          if (!theme || theme === 'system') {
-            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-          }
-          const isDark = theme === 'dark'
-          document.documentElement.classList.toggle('dark', isDark)
-          document
-            .querySelector('meta[name="theme-color"]')
-            ?.setAttribute('content', isDark ? '#14191b' : '#f4efe5')
-        }
-
-        applyStoredTheme()
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-          const storedTheme = localStorage.getItem('theme')
-          if (!storedTheme || storedTheme === 'system') applyStoredTheme()
-        })
-      })()
-    </script>
+    <BaseHead {...meta} description={meta.description ?? config.description} />
   </head>
-
-  <body class:list={['site-body bg-background text-foreground', bodyClass]} {...props}>
-    <div class='site-grid' aria-hidden='true'></div>
-    {
-      highlightColor && (
-        <div class='site-highlight' style={`--page-accent:${highlightColor}`} aria-hidden='true' />
-      )
-    }
-
-    <div id='main-container' class='site-shell relative z-10 mx-auto min-h-[100dvh] w-full'>
-      <aside class='site-rail' aria-label='站点侧栏'>
-        <div class='site-rail-inner'>
-          <a class='site-brand' href='/' aria-label='Atmoos 首页'>
-            <span class='site-avatar-frame'>
-              <Image
-                class='site-avatar'
-                src={avatar}
-                width={64}
-                height={64}
-                alt={config.logo.alt || 'Atmoos 头像'}
-                loading='eager'
-              />
-            </span>
-            <span class='site-brand-copy'>
-              <strong>ATMOOS</strong>
-              <small>AMI’S WORKING NOTES</small>
-            </span>
-          </a>
-
-          <div class='site-rail-edition mono-label' aria-hidden='true'>
-            <span>PUBLIC WORKBENCH</span>
-            <span>2026—</span>
-          </div>
-
-          <nav class='site-nav' aria-label='主导航'>
-            {
-              menu.map((item, index) => (
-                <a
-                  class:list={[{ active: isActive(item.link) }]}
-                  href={item.link}
-                  aria-current={isActive(item.link) ? 'page' : undefined}
-                >
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <strong>{item.title}</strong>
-                  <i aria-hidden='true'>→</i>
-                </a>
-              ))
-            }
-          </nav>
-
-          <div class='site-rail-foot'>
-            <p class='site-rail-note'>公开笔记持续整理中。结构可以修订，经验必须经得起复查。</p>
-            <nav class='site-utility-grid' aria-label='站点工具'>
-              <a class='site-utility' href='/search' aria-label='搜索笔记'>
-                <Icon name='search' class='size-4' />
-                <span>搜索</span>
+  <body class='site-body'>
+    <a class='skip-link' href='#main-content'>跳到正文</a>
+    <div class='paper-sheet'>
+      <header class='site-header'>
+        <a class='site-brand' href='/' aria-label='Atmoos 首页'
+          >ATMOOS<span aria-hidden='true'>.</span></a
+        >
+        <nav class='site-nav' aria-label='主导航'>
+          {
+            config.header.menu?.map((item) => (
+              <a href={item.link} aria-current={isActive(item.link) ? 'page' : undefined}>
+                {item.title}
               </a>
-              <a class='site-utility' href='https://github.com/ATmoos985' rel='me'>
-                <Icon name='github' class='size-4' />
-                <span>GitHub</span>
-              </a>
-              <a class='site-utility' href='/docs/rss.xml'>
-                <Icon name='rss' class='size-4' />
-                <span>RSS</span>
-              </a>
-              <button
-                class='site-utility'
-                type='button'
-                data-theme-toggle
-                aria-label='切换明暗主题'
-              >
-                <Icon name='sun' class='theme-light size-4' />
-                <Icon name='moon' class='theme-dark size-4' />
-                <span>主题</span>
-              </button>
-            </nav>
-          </div>
-        </div>
-      </aside>
-
-      <div class='site-stage'>
-        <header class='site-header'>
-          <a class='site-mobile-brand' href='/' aria-label='Atmoos 首页'>
-            <span aria-hidden='true'>A</span>
-            <strong>ATMOOS</strong>
-          </a>
-
-          <div class='site-intro' aria-label='站点介绍'>
-            <span class='mono-label'>Working note / 01</span>
-            <p>把复杂问题拆开，把求解经验写成可以复查的方法。</p>
-          </div>
-
-          <div class='site-actions'>
-            <a class='site-icon-button' href='/search' aria-label='搜索笔记' title='搜索'>
-              <Icon name='search' class='size-5' />
-            </a>
-            <button
-              class='site-icon-button'
-              type='button'
-              data-theme-toggle
-              aria-label='切换明暗主题'
-            >
-              <Icon name='sun' class='theme-light size-5' />
-              <Icon name='moon' class='theme-dark size-5' />
-            </button>
-            <details class='site-menu'>
-              <summary class='site-icon-button' aria-label='打开站点导航'>
-                <Icon name='menu' class='size-5' />
-              </summary>
-              <div class='site-menu-panel'>
-                <p class='mono-label'>Site index / {menu.length.toString().padStart(2, '0')}</p>
-                <nav aria-label='移动端导航'>
-                  {
-                    menu.map((item, index) => (
-                      <a
-                        class:list={[{ active: isActive(item.link) }]}
-                        href={item.link}
-                        aria-current={isActive(item.link) ? 'page' : undefined}
-                      >
-                        <span>{String(index + 1).padStart(2, '0')}</span>
-                        <strong>{item.title}</strong>
-                      </a>
-                    ))
-                  }
-                </nav>
-                <div class='site-menu-links'>
-                  <a href='https://github.com/ATmoos985' rel='me'>GitHub ↗</a>
-                  <a href='/docs/rss.xml'>RSS ↗</a>
-                </div>
-              </div>
-            </details>
-          </div>
-        </header>
-
-        <div class='site-content w-full flex-1'>
-          <slot />
-        </div>
-
-        <footer class='site-footer'>
-          <div>
-            <span>© {new Date().getFullYear()} Ami</span>
-            <span class='site-footer-note'>从真实笔记中整理，持续修订。</span>
-          </div>
-          <div class='site-footer-links'>
-            <a href='https://github.com/ATmoos985' rel='me'>GitHub</a>
-            <a href='/docs/rss.xml'>RSS</a>
-          </div>
-        </footer>
+            ))
+          }
+        </nav>
+      </header>
+      <div class='site-content'>
+        <slot />
       </div>
+      <footer class='site-footer'>
+        <span>© {new Date().getFullYear()} Ami</span>
+        <a href='/blog/rss.xml'>RSS 订阅</a>
+      </footer>
     </div>
-
     <Analytics />
-
-    <script is:inline>
-      const syncThemeButtons = () => {
-        const isDark = document.documentElement.classList.contains('dark')
-        document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
-          button.setAttribute('aria-pressed', String(isDark))
-          button.setAttribute('aria-label', isDark ? '切换到浅色主题' : '切换到深色主题')
-        })
-      }
-
-      document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
-        button.addEventListener('click', () => {
-          const root = document.documentElement
-          const nextTheme = root.classList.contains('dark') ? 'light' : 'dark'
-          root.classList.toggle('dark', nextTheme === 'dark')
-          localStorage.setItem('theme', nextTheme)
-          document
-            .querySelector('meta[name="theme-color"]')
-            ?.setAttribute('content', nextTheme === 'dark' ? '#14191b' : '#f4efe5')
-          syncThemeButtons()
-        })
-      })
-
-      syncThemeButtons()
-
-      document.querySelectorAll('.site-menu').forEach((menu) => {
-        const summary = menu.querySelector('summary')
-        const syncMenuLabel = () => {
-          summary?.setAttribute(
-            'aria-label',
-            menu.hasAttribute('open') ? '关闭站点导航' : '打开站点导航'
-          )
-        }
-
-        menu.addEventListener('toggle', syncMenuLabel)
-        document.addEventListener('keydown', (event) => {
-          if (event.key !== 'Escape' || !menu.hasAttribute('open')) return
-          menu.removeAttribute('open')
-          summary?.focus()
-        })
-        document.addEventListener('click', (event) => {
-          if (!menu.hasAttribute('open') || menu.contains(event.target)) return
-          menu.removeAttribute('open')
-        })
-        syncMenuLabel()
-      })
-    </script>
   </body>
 </html>
-
-<style>
-  #main-container {
-    padding-top: env(safe-area-inset-top);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-</style>

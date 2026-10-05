@@ -5,9 +5,9 @@
   "version": "0.1.0",
   "packageManager": "npm@10.9.8",
   "scripts": {
-    "dev": "astro dev",
-    "dev:check": "astro check --watch & astro dev",
-    "build": "astro-pure check && astro check && astro build",
+    "dev": "astro dev --force",
+    "dev:check": "astro check --watch & astro dev --force",
+    "build": "astro-pure check && astro sync --force && astro check && astro build",
     "preview": "astro preview",
     "sync": "astro sync",
     "check": "astro check",

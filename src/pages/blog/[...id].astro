@@ -1,0 +1,19 @@
+---
+import { getBlogPosts, postUrl } from '@/data/blog'
+
+import ArticleReader from '@/components/ArticleReader.astro'
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  const posts = await getBlogPosts()
+  const link = (post: (typeof posts)[number] | undefined) =>
+    post ? { title: post.data.title, url: postUrl(post) } : undefined
+  return posts.map((post, index) => ({
+    params: { id: post.id },
+    props: { post, previous: link(posts[index - 1]), next: link(posts[index + 1]) }
+  }))
+}
+---
+
+<ArticleReader {...Astro.props} />

@@ -3,7 +3,7 @@ import type { Config, IntegrationUserConfig, ThemeUserConfig } from 'astro-pure/
 export const theme: ThemeUserConfig = {
   title: 'Atmoos',
   author: 'Ami',
-  description: 'Ami 的个人入口：CV、公开笔记、随笔与持续更新记录。',
+  description: 'Ami 的个人简历、博客与教程，记录学习、实践和个人思考。',
   favicon: '/favicon/favicon-32x32.png',
   socialCard: '/favicon/android-chrome-512x512.png',
   locale: {
@@ -29,15 +29,9 @@ export const theme: ThemeUserConfig = {
 
   header: {
     menu: [
-      { title: '首页', link: '/' },
-      { title: '笔记', link: '/docs' },
-      { title: '随笔', link: '/essays' },
-      { title: '日历', link: '/calendar' },
-      { title: '专题', link: '/topics' },
-      { title: '项目', link: '/projects' },
-      { title: '近况', link: '/now' },
-      { title: 'CV', link: '/cv' },
-      { title: '关于', link: '/about' }
+      { title: 'CV', link: '/' },
+      { title: '博客', link: '/blog' },
+      { title: '教程', link: '/tutorials' }
     ]
   },
 
@@ -47,7 +41,7 @@ export const theme: ThemeUserConfig = {
     credits: false,
     social: [
       { icon: 'github', label: 'GitHub', href: 'https://github.com/ATmoos985' },
-      { icon: 'rss', label: '笔记 RSS', href: '/docs/rss.xml' }
+      { icon: 'rss', label: '博客 RSS', href: '/blog/rss.xml' }
     ]
   },
 
@@ -57,7 +51,7 @@ export const theme: ThemeUserConfig = {
       properties: { style: 'user-select:none' }
     },
     blogPageSize: 8,
-    share: ['weibo', 'x', 'bluesky']
+    share: []
   }
 }
 
@@ -67,7 +61,7 @@ export const integ: IntegrationUserConfig = {
     applyTip: [],
     cacheAvatar: false
   },
-  pagefind: true,
+  pagefind: false,
   quote: {
     server: '',
     target: '() => ""'

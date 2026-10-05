@@ -3,17 +3,10 @@ import type { ShikiTransformer } from 'shiki'
 
 function parseMetaString(str = '') {
   return Object.fromEntries(
-    str.split(' ').reduce(
-      (acc: [string, string | true][], cur) => {
-        const matched = cur.match(/(.+)?=("(.+)"|'(.+)')$/)
-        if (matched === null) return acc
-        const key = matched[1]
-        const value = matched[3] || matched[4] || true
-        acc.push([key, value])
-        return acc
-      },
-      [] as [string, string | true][]
-    )
+    Array.from(str.matchAll(/([\w-]+)=(?:"([^"]*)"|'([^']*)')/g), (match) => [
+      match[1],
+      match[2] ?? match[3]
+    ])
   )
 }
 
@@ -85,68 +78,44 @@ export const addLanguage = (): ShikiTransformer => {
 }
 
 // Add a copy button to the code block
-export const addCopyButton = (timeout?: number): ShikiTransformer => {
-  const toggleMs = timeout || 2000
+export const addCopyButton = (): ShikiTransformer => {
   return {
     name: 'shiki-transformer-copy-button',
     pre(node) {
       const button = h(
         'button',
         {
-          class: 'copy text-muted-foreground p-1 box-content border rounded-lg bg-card',
-          'aria-label': 'Copy code',
-          'data-code': this.source,
-          onclick: `
-          navigator.clipboard.writeText(this.dataset.code);
-          this.classList.add('copied');
-          setTimeout(() => this.classList.remove('copied'), ${toggleMs})
-        `
+          type: 'button',
+          class: 'copy',
+          hidden: true,
+          'aria-label': '复制代码',
+          'data-code': this.source
         },
-        [
-          h('div', { class: 'ready' }, [
-            h('svg', { class: 'size-5' }, [
-              h('use', { href: '/icons/code.svg#mingcute-clipboard-line' })
-            ])
-          ]),
-          h('div', { class: 'success hidden' }, [
-            h('svg', { class: 'size-5' }, [
-              h('use', { href: '/icons/code.svg#mingcute-file-check-line' })
-            ])
-          ])
-        ]
+        '复制'
       )
       node.children.push(button)
     }
   }
 }
 
-// Add a copy button to the code block
+// Long blocks collapse only after the reader script is ready.
 export const addCollapse = (displayLineCount?: number): ShikiTransformer => {
   const line = displayLineCount || 15
   return {
     name: 'shiki-transformer-add-collapse',
     pre(node) {
       if (this.lines.length <= line) return
-      node.properties = {
-        ...node.properties,
-        class: `${(node.properties?.class as string) || ''} collapsed`
-      }
       const collapse = h(
         'button',
         {
-          class: 'collapse-toggle bg-card text-muted-foreground rounded-lg m-2',
-          'aria-label': 'Toggle collapse code block',
-          onclick: "this.parentElement.classList.toggle('collapsed')"
+          type: 'button',
+          class: 'collapse-toggle',
+          hidden: true,
+          'aria-expanded': 'false'
         },
-        [
-          h('svg', { class: 'size-5' }, [
-            h('use', { href: '/icons/code.svg#mingcute-arrow-down-line' })
-          ]),
-          h('span', { class: 'desc' }, ' code')
-        ]
+        '展开全部代码'
       )
       node.children.push(collapse)
-      node.children.push(h('div', { class: 'collapse-fade' }))
     }
   }
 }

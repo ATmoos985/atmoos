@@ -1,0 +1,217 @@
+---
+import { Image } from 'astro:assets'
+import { render } from 'astro:content'
+import { formatDate, tagUrl, type BlogPost } from '@/data/blog'
+import { tutorialTagUrl, type Tutorial } from '@/data/tutorials'
+
+import PageLayout from '@/layouts/ContentLayout.astro'
+
+import 'katex/dist/katex.min.css'
+
+interface ArticleLink {
+  title: string
+  url: string
+}
+interface Props {
+  post: BlogPost | Tutorial
+  previous?: ArticleLink
+  next?: ArticleLink
+}
+
+const { post, previous, next } = Astro.props
+const { Content, headings } = await render(post)
+const { data } = post
+const isTutorial = post.collection === 'tutorials'
+const sectionUrl = isTutorial ? '/tutorials' : '/blog'
+const sectionLabel = isTutorial ? '教程' : '博客'
+const makeTagUrl = isTutorial ? tutorialTagUrl : tagUrl
+const series = isTutorial ? post.data.series : undefined
+const contents = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 4)
+---
+
+<PageLayout
+  meta={{
+    title: data.title,
+    description: data.description,
+    articleDate: data.publishDate.toISOString(),
+    ogImage: data.heroImage?.src.src
+  }}
+  {sectionUrl}
+  {sectionLabel}
+  language={data.language}
+>
+  <Fragment slot='header'>
+    {series && <p class='article-series'>{series}</p>}
+    <h1 class='editorial-title'>{data.title}</h1>
+    {data.description !== data.title && <p class='article-description'>{data.description}</p>}
+    <p class='article-dates'>
+      <span
+        >发布于 <time datetime={data.publishDate.toISOString()}>{formatDate(data.publishDate)}</time
+        ></span
+      >
+      {
+        data.updatedDate && data.updatedDate.valueOf() > data.publishDate.valueOf() && (
+          <span>
+            更新于{' '}
+            <time datetime={data.updatedDate.toISOString()}>{formatDate(data.updatedDate)}</time>
+          </span>
+        )
+      }
+    </p>
+    {
+      data.tags.length > 0 && (
+        <ul class='tag-list' aria-label='文章标签'>
+          {data.tags.map((tag) => (
+            <li>
+              <a href={makeTagUrl(tag)}>#{tag}</a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    {
+      data.heroImage && (
+        <Image
+          src={data.heroImage.src}
+          alt={data.heroImage.alt ?? ''}
+          class='article-hero zoomable'
+          loading='eager'
+        />
+      )
+    }
+  </Fragment>
+
+  <Fragment slot='contents'>
+    {
+      contents.length > 0 && (
+        <details class='article-contents' open>
+          <summary>文章目录</summary>
+          <nav aria-label='文章目录'>
+            <ol>
+              {contents.map((heading) => (
+                <li style={`--depth: ${heading.depth - 2}`}>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </details>
+      )
+    }
+  </Fragment>
+
+  <Content />
+
+  <Fragment slot='adjacent'>
+    {
+      (previous || next) && (
+        <nav class='article-adjacent' aria-label={isTutorial ? '章节导航' : '文章导航'}>
+          {previous && (
+            <a href={previous.url} rel='prev'>
+              <span>← {isTutorial ? '上一节' : '上一篇'}</span>
+              <strong>{previous.title}</strong>
+            </a>
+          )}
+          {next && (
+            <a class='next' href={next.url} rel='next'>
+              <span>{isTutorial ? '下一节' : '下一篇'} →</span>
+              <strong>{next.title}</strong>
+            </a>
+          )}
+        </nav>
+      )
+    }
+  </Fragment>
+</PageLayout>
+
+<style>
+  h1 {
+    margin: 0;
+    font-size: clamp(1.5rem, 4vw, 1.85rem);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .article-series {
+    margin: 0 0 0.6rem;
+    font-size: 0.75rem;
+    color: hsl(var(--primary));
+  }
+  .article-description {
+    margin: 0.85rem 0 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .article-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.3rem;
+    margin: 1rem 0 0.6rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.72rem;
+  }
+  .article-dates time {
+    font-family: var(--mono-font);
+  }
+  .article-hero {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 1.25rem;
+  }
+  .article-contents {
+    margin-top: 1.25rem;
+    font-size: 0.8rem;
+  }
+  .article-contents summary {
+    cursor: pointer;
+    color: hsl(var(--muted-foreground));
+    width: fit-content;
+  }
+  .article-contents ol {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    line-height: 1.9;
+  }
+  .article-contents li {
+    margin-top: 0.3rem;
+    padding-left: calc(var(--depth) * 1rem);
+    overflow-wrap: anywhere;
+  }
+  .article-contents a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2rem;
+  }
+  .article-adjacent {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid hsl(var(--border));
+  }
+  .article-adjacent a {
+    display: grid;
+    gap: 0.5rem;
+    overflow-wrap: anywhere;
+  }
+  .article-adjacent span {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.72rem;
+  }
+  .article-adjacent strong {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .article-adjacent .next {
+    grid-column: 2;
+    text-align: right;
+  }
+  @media print {
+    .article-adjacent,
+    .article-contents {
+      display: none;
+    }
+  }
+</style>

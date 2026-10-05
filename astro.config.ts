@@ -26,7 +26,23 @@ import config from './src/site.config.ts'
 export default defineConfig({
   site: process.env.PUBLIC_SITE_URL ?? 'https://atmoos.vercel.app',
   trailingSlash: 'never',
+  redirects: {
+    '/cv': '/',
+    '/docs': '/blog',
+    '/docs/rss.xml': '/blog/rss.xml',
+    '/docs/[...id]': '/blog/[...id]',
+    '/essays': '/blog',
+    '/essays/[...id]': '/blog/[...id]'
+  },
   server: { host: true },
+  vite: {
+    server: {
+      fs: {
+        // Preserve Vite's defaults and keep archived notes out of the local preview.
+        deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/archive/**']
+      }
+    }
+  },
   prefetch: {
     defaultStrategy: 'viewport'
   },
@@ -40,6 +56,7 @@ export default defineConfig({
     remotePatterns: [{ protocol: 'https' }]
   },
   markdown: {
+    remarkRehype: { footnoteLabel: '注释', footnoteBackLabel: '返回正文引用' },
     remarkPlugins: [remarkMath],
     rehypePlugins: [
       [rehypeKatex, {}],
@@ -76,7 +93,7 @@ export default defineConfig({
         // @ts-ignore this happens due to multiple versions of shiki types
         addLanguage(),
         // @ts-ignore this happens due to multiple versions of shiki types
-        addCopyButton(2000), // timeout in ms
+        addCopyButton(),
         // @ts-ignore this happens due to multiple versions of shiki types
         addCollapse(15) // max lines that needs to collapse
       ]

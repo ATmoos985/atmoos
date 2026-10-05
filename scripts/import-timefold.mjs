@@ -9,7 +9,7 @@ const EXPECTED_TUTORIAL_WIKILINK_COUNT = 218
 const EXPECTED_OUTPUT_FILE_COUNT = 49
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url))
-const outputRoot = path.resolve(scriptDirectory, '../src/content/docs/timefold')
+const outputRoot = path.resolve(scriptDirectory, '../archive/timefold')
 const sourceArgument = process.argv[2]
 
 if (!sourceArgument || sourceArgument === '--help' || sourceArgument === '-h') {
@@ -747,7 +747,7 @@ function convertWikilinks(body, currentEntry) {
     const display =
       alias || (target ? linkedDocument.data.title : fragment || linkedDocument.data.title)
     const anchor = fragment ? anchorFor(fragment) : ''
-    const publicPath = `/docs/timefold/${linkedEntry.output.replace(/\.md$/i, '')}`
+    const publicPath = `/blog/timefold/${linkedEntry.output.replace(/\.md$/i, '')}`
     return `[${escapeMarkdownText(display)}](${publicPath}${anchor ? `#${anchor}` : ''})`
   })
 }
@@ -785,7 +785,10 @@ function transformBody(entry, originalBody) {
   return `${body.trim()}\n`
 }
 
-if (path.basename(outputRoot) !== 'timefold' || !outputRoot.includes('/src/content/docs/')) {
+if (
+  path.basename(outputRoot) !== 'timefold' ||
+  path.dirname(outputRoot) !== path.resolve(scriptDirectory, '../archive')
+) {
   throw new Error(`Refusing to replace unexpected output path: ${outputRoot}`)
 }
 
@@ -816,7 +819,7 @@ const allOutput = outputDocuments.map(({ text }) => text).join('\n')
 const publicFilesByUrl = new Set(
   outputFiles.map(
     (file) =>
-      `/docs/timefold/${normalizeRelative(path.relative(outputRoot, file)).replace(/\.md$/i, '')}`
+      `/blog/timefold/${normalizeRelative(path.relative(outputRoot, file)).replace(/\.md$/i, '')}`
   )
 )
 
@@ -870,7 +873,7 @@ for (const { file, relative, text } of outputDocuments) {
     )
   }
 
-  for (const match of text.matchAll(/\]\((\/docs\/timefold\/[^)#\s]+)(?:#[^)]+)?\)/g)) {
+  for (const match of text.matchAll(/\]\((\/blog\/timefold\/[^)#\s]+)(?:#[^)]+)?\)/g)) {
     assert(publicFilesByUrl.has(match[1]), `${relative} links to missing page ${match[1]}`)
   }
 

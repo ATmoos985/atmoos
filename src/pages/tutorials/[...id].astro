@@ -1,0 +1,23 @@
+---
+import { getTutorials, tutorialUrl } from '@/data/tutorials'
+
+import ArticleReader from '@/components/ArticleReader.astro'
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  const notes = await getTutorials()
+  const link = (note: (typeof notes)[number] | undefined) =>
+    note ? { title: note.data.title, url: tutorialUrl(note) } : undefined
+  return notes.map((post) => {
+    const chapters = notes.filter((note) => note.data.series === post.data.series)
+    const index = chapters.findIndex((note) => note.id === post.id)
+    return {
+      params: { id: post.id },
+      props: { post, previous: link(chapters[index - 1]), next: link(chapters[index + 1]) }
+    }
+  })
+}
+---
+
+<ArticleReader {...Astro.props} />
