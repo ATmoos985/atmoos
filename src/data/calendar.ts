@@ -22,6 +22,16 @@ export function validDay(value: string | null): string {
   return Number.isFinite(date.valueOf()) && date.toISOString().slice(0, 10) === value ? value : ''
 }
 
+export function calendarMonth(params: URLSearchParams, fallback: string): string {
+  const chosen = validMonth(`${params.get('year') ?? ''}-${params.get('monthNumber') ?? ''}`)
+  return (
+    chosen ||
+    validMonth(params.get('month')) ||
+    validDay(params.get('date')).slice(0, 7) ||
+    fallback
+  )
+}
+
 export function shiftMonth(month: string, offset: number): string {
   const [year, number] = month.split('-').map(Number)
   const result = new Date(Date.UTC(year, number - 1 + offset, 1)).toISOString().slice(0, 7)

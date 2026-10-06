@@ -1,6 +1,6 @@
 ---
 import { formatDate, getBlogPosts, postUrl, publicationYear } from '@/data/blog'
-import { blogFilterUrl, publicationDay, validDay, validMonth } from '@/data/calendar'
+import { blogFilterUrl, calendarMonth, publicationDay, validDay } from '@/data/calendar'
 
 import PageLayout from '@/layouts/BaseLayout.astro'
 import BlogCalendar from '@/components/BlogCalendar.astro'
@@ -10,22 +10,21 @@ export const prerender = false
 const posts = await getBlogPosts()
 const activeTag = Astro.url.searchParams.get('tag')?.trim().toLowerCase() ?? ''
 const activeDate = validDay(Astro.url.searchParams.get('date'))
-const month =
-  validMonth(Astro.url.searchParams.get('month')) ||
-  activeDate.slice(0, 7) ||
+const month = calendarMonth(
+  Astro.url.searchParams,
   publicationDay(posts[0]?.data.publishDate ?? new Date()).slice(0, 7)
+)
 const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =>
   a.localeCompare(b, 'zh-CN')
 )
 const counts = new Map<string, number>()
-for (const post of posts) {
+const taggedPosts = posts.filter((post) => !activeTag || post.data.tags.includes(activeTag))
+for (const post of taggedPosts) {
   const date = publicationDay(post.data.publishDate)
   counts.set(date, (counts.get(date) ?? 0) + 1)
 }
-const visiblePosts = posts.filter(
-  (post) =>
-    (!activeTag || post.data.tags.includes(activeTag)) &&
-    (!activeDate || publicationDay(post.data.publishDate) === activeDate)
+const visiblePosts = taggedPosts.filter(
+  (post) => !activeDate || publicationDay(post.data.publishDate) === activeDate
 )
 const years = [...new Set(visiblePosts.map((post) => publicationYear(post.data.publishDate)))]
 ---
@@ -131,8 +130,8 @@ const years = [...new Set(visiblePosts.map((post) => publicationYear(post.data.p
   }
   .blog-columns {
     display: grid;
-    grid-template-columns: clamp(13rem, 19vw, 18rem) minmax(0, 1fr);
-    gap: clamp(2rem, 5vw, 5rem);
+    grid-template-columns: clamp(14rem, 19vw, 15.25rem) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
   }
   .blog-entries {
     min-width: 0;

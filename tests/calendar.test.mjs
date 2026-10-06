@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   blogFilterUrl,
+  calendarMonth,
   monthDays,
   publicationDay,
   shiftMonth,
@@ -39,6 +40,16 @@ test('Monday-first calendar handles leap years, six-week months and year transit
   assert.equal(shiftMonth('2026-12', 1), '2027-01')
   assert.equal(shiftMonth('2026-01', -1), '2025-12')
   assert.equal(shiftMonth('9999-12', 1), '')
+})
+test('direct month selection supports distant years and safely falls back for invalid values', () => {
+  const resolve = (query) => calendarMonth(new URLSearchParams(query), '2026-10')
+  assert.equal(resolve('year=2024&monthNumber=02'), '2024-02')
+  assert.equal(resolve('year=1998&monthNumber=12'), '1998-12')
+  assert.equal(resolve('year=2027&monthNumber=01&month=2026-10'), '2027-01')
+  assert.equal(resolve('year=10000&monthNumber=01&date=2024-02-29'), '2024-02')
+  assert.equal(resolve('year=2026&monthNumber=13'), '2026-10')
+  assert.equal(resolve('month=2025-12'), '2025-12')
+  assert.equal(resolve('date=2026-02-29'), '2026-10')
 })
 test('combined filters encode tags and omit cleared dates', () => {
   const url = new URL(
