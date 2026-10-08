@@ -66,7 +66,7 @@ export const prerender = true
       </section>
 
       <section class='cv-section' aria-labelledby='work-title'>
-        <h2 id='work-title'>代表项目</h2>
+        <h2 id='work-title'>代表项目 <a class='section-more' href='/works'>全部作品 ↗</a></h2>
         <ul class='cv-work'>
           <li><div class='project-heading'><h3>双鹿电池 APS</h3></div></li>
           <li><div class='project-heading'><h3>长阳科技 APS</h3></div></li>
@@ -86,14 +86,11 @@ export const prerender = true
 
       <section class='cv-section' aria-labelledby='education-title'>
         <h2 id='education-title'>教育经历</h2>
-        <p>2021–2025 · 大连海事大学</p>
+        <div class='project-heading'><h3>大连海事大学</h3><span class='project-meta'>2021–2025</span></div>
         <p>计算机科学与技术专业</p>
       </section>
 
-      <section class='cv-section' aria-labelledby='skills-title'>
-        <h2 id='skills-title'>技术能力</h2>
-        <p class='cv-placeholder'>待补充</p>
-      </section>
+      
     </div>
   </main>
 </PageLayout>
@@ -114,7 +111,7 @@ export const prerender = true
     display: grid;
     align-content: start;
     min-width: 0;
-    gap: 1.5rem;
+    gap: 0;
   }
   .cv-header h1 {
     margin: 0;
@@ -135,7 +132,8 @@ export const prerender = true
     margin: 0;
     max-width: 48rem;
     color: hsl(var(--muted-foreground));
-    font-size: 0.875rem;
+    font-size: 0.9rem;
+    font-weight: 400;
     line-height: 1.8;
   }
   .cv-section .cv-placeholder {
@@ -168,10 +166,17 @@ export const prerender = true
     text-decoration: underline;
     text-underline-offset: 0.2em;
   }
-  .cv-section h2 {
+  .cv-section { padding: 1.2rem 0; border-bottom: 1px solid hsl(var(--border) / 0.5); }
+  .cv-section:first-child { padding-top: 0; }
+  .cv-section:last-child { border-bottom: 0; }
+  .cv-header > p { font-size: 0.9rem; font-weight: 400; margin: 0.5rem 0 1rem; }
+  .section-more { margin-left: auto; font-size: 0.72rem; font-weight: 400; color: hsl(var(--muted-foreground)); }
+  .cv-section h2 { display: flex; align-items: baseline; gap: 1rem;
     margin: 0 0 0.6rem;
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: hsl(var(--primary));
+    font-weight: 500;
     line-height: 1.5;
   }
   .cv-work {
@@ -190,14 +195,15 @@ export const prerender = true
     gap: 0.25rem 1rem;
     margin-bottom: 0.25rem;
   }
-  .cv-work h3 {
+  .project-heading h3 {
     margin: 0;
     font-size: 0.875rem;
     font-weight: 500;
   }
   .project-meta {
     color: hsl(var(--muted-foreground));
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+    font-family: var(--mono-font);
   }
   @media screen and (max-width: 640px) {
     .cv-page {

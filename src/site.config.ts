@@ -31,6 +31,7 @@ export const theme: ThemeUserConfig = {
     menu: [
       { title: 'CV', link: '/' },
       { title: '博客', link: '/blog' },
+      { title: '作品', link: '/works' },
       { title: '教程', link: '/tutorials' }
     ]
   },

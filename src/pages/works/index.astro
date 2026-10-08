@@ -1,0 +1,37 @@
+---
+import PageLayout from '@/layouts/BaseLayout.astro'
+export const prerender = true
+const projects = [
+  { name: '双鹿电池 APS', category: 'APS 项目', url: undefined, description: undefined },
+  { name: '长阳科技 APS', category: 'APS 项目', url: undefined, description: undefined },
+  { name: 'Atmoos 个人网站', category: 'Astro · 开源', url: 'https://github.com/ATmoos985/atmoos', description: '整理与发布个人博客、教程和作品。' }
+]
+---
+<PageLayout meta={{ title: '作品', description: 'TSA 的项目与作品。' }}>
+  <main id='main-content' class='works-page'>
+    <header class='works-head'><p>SELECTED WORKS</p><h1>作品</h1><span>项目与实践记录</span></header>
+    <div class='works-list'>
+      {projects.map((project, index) => <article class='work'>
+        <span class='work-number'>{String(index + 1).padStart(2, '0')}</span>
+        <div><p class='category'>{project.category}</p><h2>{project.name}</h2>{project.description && <p class='description'>{project.description}</p>}</div>
+        <div class='work-link'>{project.url ? <a href={project.url} target='_blank' rel='noreferrer'>查看源码 ↗</a> : <span>链接待补充</span>}</div>
+      </article>)}
+    </div>
+  </main>
+</PageLayout>
+<style>
+  .works-page { padding: 1.75rem 0 2.5rem; width: 100%; }
+  .works-head { padding-bottom: 1.5rem; border-bottom: 1px solid hsl(var(--border)); }
+  .works-head p { margin: 0 0 .5rem; font-family: var(--mono-font); font-size: .7rem; letter-spacing: .12em; color: hsl(var(--primary)); }
+  .works-head h1 { margin: 0 0 .5rem; font-size: 1.8rem; font-weight: 500; }
+  .works-head > span, .description { color: hsl(var(--muted-foreground)); font-size: .9rem; font-weight: 400; line-height: 1.8; }
+  .work { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1.6rem 0; border-bottom: 1px solid hsl(var(--border) / .5); }
+  .work-number { align-self: start; padding-top: .2rem; font-family: var(--mono-font); font-size: .75rem; color: hsl(var(--muted-foreground)); }
+  .category { margin: 0 0 .4rem; font-size: .72rem; color: hsl(var(--primary)); }
+  h2 { margin: 0; font-size: 1.15rem; font-weight: 500; }
+  .description { margin: .5rem 0 0; }
+  .work-link { font-size: .8rem; }
+  .work-link > span { color: hsl(var(--muted-foreground)); }
+  .work-link a { border-bottom: 1px solid hsl(var(--border)); padding-bottom: .2rem; }
+  @media(max-width: 640px) { .work { grid-template-columns: 2rem minmax(0, 1fr); gap: .75rem; } .work-link { grid-column: 2; } }
+</style>
