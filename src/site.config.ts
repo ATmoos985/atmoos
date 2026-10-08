@@ -2,8 +2,8 @@ import type { Config, IntegrationUserConfig, ThemeUserConfig } from 'astro-pure/
 
 export const theme: ThemeUserConfig = {
   title: 'Atmoos',
-  author: 'Ami',
-  description: 'Ami 的个人简历、博客与教程，记录学习、实践和个人思考。',
+  author: 'TSA',
+  description: 'TSA 的个人简历、博客与教程，记录学习、实践和个人思考。',
   favicon: '/favicon/favicon-32x32.png',
   socialCard: '/favicon/android-chrome-512x512.png',
   locale: {
